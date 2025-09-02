@@ -1,0 +1,430 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    /* -------------------- ONE-CLICK CHOOSER -------------------- */
+    {
+      "label": "Test: Run (choose framework/auth/scope)",
+      "type": "shell",
+      "command": "node",
+      "args": ["${workspaceFolder}/scripts/test-runner.js"],
+      "options": {
+        "env": {
+          "FRAMEWORK": "${input:FRAMEWORK}",
+          "SCOPE": "${input:SCOPE}",
+          "AUTH_CHOICE": "${input:AUTH_CHOICE}",
+          "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
+          "APPSYNC_API_KEY": "${input:APPSYNC_API_KEY}",
+          "AWS_REGION": "${input:AWS_REGION}",
+          "AWS_PROFILE": "${input:AWS_PROFILE}",
+          "APPSYNC_JWT": "${input:APPSYNC_JWT}",
+          "COGNITO_CLIENT_ID": "${input:COGNITO_CLIENT_ID}",
+          "COGNITO_USERNAME": "${input:COGNITO_USERNAME}",
+          "COGNITO_PASSWORD": "${input:COGNITO_PASSWORD}",
+          "CONTEXTS_ROOT": "${input:CONTEXTS_ROOT}",
+          "PYTHON_BIN": "${config:python.defaultInterpreterPath}"
+        }
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+
+    /* -------------------- JEST (workspace) -------------------- */
+    {
+      "label": "Test: Jest (API Key, workspace)",
+      "type": "shell",
+      "command": "npx",
+      "args": ["jest", "--config", "${workspaceFolder}/jest.config.ts"],
+      "options": {
+        "env": {
+          "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
+          "APPSYNC_AUTH_MODE": "API_KEY",
+          "APPSYNC_API_KEY": "${input:APPSYNC_API_KEY}",
+          "TESTS_ROOT": "${workspaceFolder}"
+        }
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Jest (IAM, workspace)",
+      "type": "shell",
+      "command": "npx",
+      "args": ["jest", "--config", "${workspaceFolder}/jest.config.ts"],
+      "options": {
+        "env": {
+          "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
+          "APPSYNC_AUTH_MODE": "IAM",
+          "AWS_REGION": "${input:AWS_REGION}",
+          "AWS_PROFILE": "${input:AWS_PROFILE}",
+          "TESTS_ROOT": "${workspaceFolder}"
+        }
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Jest (Cognito JWT, workspace)",
+      "type": "shell",
+      "command": "npx",
+      "args": ["jest", "--config", "${workspaceFolder}/jest.config.ts"],
+      "options": {
+        "env": {
+          "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
+          "APPSYNC_AUTH_MODE": "COGNITO",
+          "APPSYNC_JWT": "${input:APPSYNC_JWT}",
+          "TESTS_ROOT": "${workspaceFolder}"
+        }
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Jest (Cognito user/pass, workspace)",
+      "type": "shell",
+      "command": "npx",
+      "args": ["jest", "--config", "${workspaceFolder}/jest.config.ts"],
+      "options": {
+        "env": {
+          "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
+          "APPSYNC_AUTH_MODE": "COGNITO",
+          "COGNITO_CLIENT_ID": "${input:COGNITO_CLIENT_ID}",
+          "COGNITO_USERNAME": "${input:COGNITO_USERNAME}",
+          "COGNITO_PASSWORD": "${input:COGNITO_PASSWORD}",
+          "AWS_REGION": "${input:AWS_REGION}",
+          "TESTS_ROOT": "${workspaceFolder}"
+        }
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+
+    /* -------------------- JEST (external contexts) -------------------- */
+    {
+      "label": "Test: Jest (API Key, external)",
+      "type": "shell",
+      "command": "npx",
+      "args": [
+        "jest",
+        "--config",
+        "${workspaceFolder}/jest.config.ts",
+        "${input:CONTEXTS_ROOT}/contexts"
+      ],
+      "options": {
+        "env": {
+          "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
+          "APPSYNC_AUTH_MODE": "API_KEY",
+          "APPSYNC_API_KEY": "${input:APPSYNC_API_KEY}",
+          "TESTS_ROOT": "${input:CONTEXTS_ROOT}"
+        }
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Jest (IAM, external)",
+      "type": "shell",
+      "command": "npx",
+      "args": [
+        "jest",
+        "--config",
+        "${workspaceFolder}/jest.config.ts",
+        "${input:CONTEXTS_ROOT}/contexts"
+      ],
+      "options": {
+        "env": {
+          "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
+          "APPSYNC_AUTH_MODE": "IAM",
+          "AWS_REGION": "${input:AWS_REGION}",
+          "AWS_PROFILE": "${input:AWS_PROFILE}",
+          "TESTS_ROOT": "${input:CONTEXTS_ROOT}"
+        }
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Jest (Cognito JWT, external)",
+      "type": "shell",
+      "command": "npx",
+      "args": [
+        "jest",
+        "--config",
+        "${workspaceFolder}/jest.config.ts",
+        "${input:CONTEXTS_ROOT}/contexts"
+      ],
+      "options": {
+        "env": {
+          "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
+          "APPSYNC_AUTH_MODE": "COGNITO",
+          "APPSYNC_JWT": "${input:APPSYNC_JWT}",
+          "TESTS_ROOT": "${input:CONTEXTS_ROOT}"
+        }
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Jest (Cognito user/pass, external)",
+      "type": "shell",
+      "command": "npx",
+      "args": [
+        "jest",
+        "--config",
+        "${workspaceFolder}/jest.config.ts",
+        "${input:CONTEXTS_ROOT}/contexts"
+      ],
+      "options": {
+        "env": {
+          "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
+          "APPSYNC_AUTH_MODE": "COGNITO",
+          "COGNITO_CLIENT_ID": "${input:COGNITO_CLIENT_ID}",
+          "COGNITO_USERNAME": "${input:COGNITO_USERNAME}",
+          "COGNITO_PASSWORD": "${input:COGNITO_PASSWORD}",
+          "AWS_REGION": "${input:AWS_REGION}",
+          "TESTS_ROOT": "${input:CONTEXTS_ROOT}"
+        }
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+
+    /* -------------------- PYTEST (workspace) -------------------- */
+    {
+      "label": "Test: Pytest (API Key, workspace)",
+      "type": "process",
+      "command": "${config:python.defaultInterpreterPath}",
+      "args": ["-m", "pytest", "contexts"],
+      "options": {
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}/contexts/_shared/pytest",
+          "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
+          "APPSYNC_AUTH_MODE": "API_KEY",
+          "APPSYNC_API_KEY": "${input:APPSYNC_API_KEY}"
+        }
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Pytest (IAM, workspace)",
+      "type": "process",
+      "command": "${config:python.defaultInterpreterPath}",
+      "args": ["-m", "pytest", "contexts"],
+      "options": {
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}/contexts/_shared/pytest",
+          "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
+          "APPSYNC_AUTH_MODE": "IAM",
+          "AWS_REGION": "${input:AWS_REGION}",
+          "AWS_PROFILE": "${input:AWS_PROFILE}"
+        }
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Pytest (Cognito JWT, workspace)",
+      "type": "process",
+      "command": "${config:python.defaultInterpreterPath}",
+      "args": ["-m", "pytest", "contexts"],
+      "options": {
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}/contexts/_shared/pytest",
+          "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
+          "APPSYNC_AUTH_MODE": "COGNITO",
+          "APPSYNC_JWT": "${input:APPSYNC_JWT}"
+        }
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Pytest (Cognito user/pass, workspace)",
+      "type": "process",
+      "command": "${config:python.defaultInterpreterPath}",
+      "args": ["-m", "pytest", "contexts"],
+      "options": {
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}/contexts/_shared/pytest",
+          "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
+          "APPSYNC_AUTH_MODE": "COGNITO",
+          "COGNITO_CLIENT_ID": "${input:COGNITO_CLIENT_ID}",
+          "COGNITO_USERNAME": "${input:COGNITO_USERNAME}",
+          "COGNITO_PASSWORD": "${input:COGNITO_PASSWORD}",
+          "AWS_REGION": "${input:AWS_REGION}"
+        }
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+
+    /* -------------------- PYTEST (external contexts) -------------------- */
+    {
+      "label": "Test: Pytest (API Key, external)",
+      "type": "process",
+      "command": "${config:python.defaultInterpreterPath}",
+      "args": ["-m", "pytest", "${input:CONTEXTS_ROOT}/contexts"],
+      "options": {
+        "env": {
+          "PYTHONPATH": "${input:CONTEXTS_ROOT}/contexts/_shared/pytest",
+          "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
+          "APPSYNC_AUTH_MODE": "API_KEY",
+          "APPSYNC_API_KEY": "${input:APPSYNC_API_KEY}"
+        }
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Pytest (IAM, external)",
+      "type": "process",
+      "command": "${config:python.defaultInterpreterPath}",
+      "args": ["-m", "pytest", "${input:CONTEXTS_ROOT}/contexts"],
+      "options": {
+        "env": {
+          "PYTHONPATH": "${input:CONTEXTS_ROOT}/contexts/_shared/pytest",
+          "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
+          "APPSYNC_AUTH_MODE": "IAM",
+          "AWS_REGION": "${input:AWS_REGION}",
+          "AWS_PROFILE": "${input:AWS_PROFILE}"
+        }
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Pytest (Cognito JWT, external)",
+      "type": "process",
+      "command": "${config:python.defaultInterpreterPath}",
+      "args": ["-m", "pytest", "${input:CONTEXTS_ROOT}/contexts"],
+      "options": {
+        "env": {
+          "PYTHONPATH": "${input:CONTEXTS_ROOT}/contexts/_shared/pytest",
+          "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
+          "APPSYNC_AUTH_MODE": "COGNITO",
+          "APPSYNC_JWT": "${input:APPSYNC_JWT}"
+        }
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Pytest (Cognito user/pass, external)",
+      "type": "process",
+      "command": "${config:python.defaultInterpreterPath}",
+      "args": ["-m", "pytest", "${input:CONTEXTS_ROOT}/contexts"],
+      "options": {
+        "env": {
+          "PYTHONPATH": "${input:CONTEXTS_ROOT}/contexts/_shared/pytest",
+          "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
+          "APPSYNC_AUTH_MODE": "COGNITO",
+          "COGNITO_CLIENT_ID": "${input:COGNITO_CLIENT_ID}",
+          "COGNITO_USERNAME": "${input:COGNITO_USERNAME}",
+          "COGNITO_PASSWORD": "${input:COGNITO_PASSWORD}",
+          "AWS_REGION": "${input:AWS_REGION}"
+        }
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+
+    /* -------------------- PYTEST (testsRoot via config) -------------------- */
+    {
+      "label": "Test: Pytest (API Key, testsRoot)",
+      "type": "process",
+      "command": "${config:python.defaultInterpreterPath}",
+      "args": [
+        "-m",
+        "pytest",
+        "${workspaceFolder}/${config:appsyncTestGen.tests.outputRoot}"
+      ],
+      "options": {
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}/${config:appsyncTestGen.tests.outputRoot}/_shared/pytest",
+          "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
+          "APPSYNC_AUTH_MODE": "API_KEY",
+          "APPSYNC_API_KEY": "${input:APPSYNC_API_KEY}",
+          "APPSYNC_WRITE_ARTIFACTS": "onfail",
+          "APPSYNC_ARTIFACT_DIR": "artifacts",
+          "APPSYNC_EXEC_VIEW": "1"
+        }
+      },
+      "group": "test",
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "FRAMEWORK",
+      "type": "pickString",
+      "description": "Choose test framework",
+      "options": ["jest", "pytest"],
+      "default": "jest"
+    },
+    {
+      "id": "SCOPE",
+      "type": "pickString",
+      "description": "Where are the contexts?",
+      "options": ["workspace", "external"],
+      "default": "workspace"
+    },
+    {
+      "id": "AUTH_CHOICE",
+      "type": "pickString",
+      "description": "Auth mode",
+      "options": ["API_KEY", "IAM", "COGNITO_JWT", "COGNITO_UP"],
+      "default": "API_KEY"
+    },
+    {
+      "id": "APPSYNC_ENDPOINT",
+      "type": "promptString",
+      "description": "GraphQL endpoint (https://…appsync-api.<region>.amazonaws.com/graphql)"
+    },
+    {
+      "id": "APPSYNC_API_KEY",
+      "type": "promptString",
+      "description": "AppSync API Key (API_KEY auth)",
+      "password": true
+    },
+    {
+      "id": "AWS_REGION",
+      "type": "promptString",
+      "description": "AWS region (IAM / Cognito username/password)",
+      "default": "us-east-1"
+    },
+    {
+      "id": "AWS_PROFILE",
+      "type": "promptString",
+      "description": "AWS CLI profile (optional, IAM)",
+      "default": ""
+    },
+    {
+      "id": "APPSYNC_JWT",
+      "type": "promptString",
+      "description": "Cognito ID token (JWT) for COGNITO_JWT",
+      "password": true
+    },
+    {
+      "id": "COGNITO_CLIENT_ID",
+      "type": "promptString",
+      "description": "Cognito App Client ID (COGNITO_UP)"
+    },
+    {
+      "id": "COGNITO_USERNAME",
+      "type": "promptString",
+      "description": "Cognito username (COGNITO_UP)"
+    },
+    {
+      "id": "COGNITO_PASSWORD",
+      "type": "promptString",
+      "description": "Cognito password (COGNITO_UP)",
+      "password": true
+    },
+    {
+      "id": "CONTEXTS_ROOT",
+      "type": "promptString",
+      "description": "Absolute path that contains 'contexts/' (for external scope)",
+      "default": ""
+    }
+  ]
+}

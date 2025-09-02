@@ -1,0 +1,268 @@
+{
+  "name": "appsync-testgen",
+  "displayName": "AppSync TestGen",
+  "publisher": "your-name",
+  "version": "0.0.2",
+  "description": "VS Code extension to fetch AppSync schemas/resolvers and generate Jest/Pytest tests via LLMs.",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "appsyncTestGen.fetchSchemaQuick",
+        "title": "AppSync: Fetch Schema (Quick)"
+      },
+      {
+        "command": "appsyncTestGen.fetchSchemaAndSave",
+        "title": "AppSync: Fetch Full Schema and Save (SDL + JSON)"
+      },
+      {
+        "command": "appsyncTestGen.fetchResolversAndSave",
+        "title": "AppSync: Fetch Resolvers and Save (IAM)"
+      },
+      {
+        "command": "appsyncTestGen.buildOperationContexts",
+        "title": "AppSync: Build Per-Operation Contexts"
+      },
+      {
+        "command": "appsyncTestGen.generateTestsFromContexts",
+        "title": "AppSync: Generate Tests from Contexts (All)"
+      },
+      {
+        "command": "appsyncTestGen.generateTestsForSelection",
+        "title": "AppSync: Generate Tests (Pick Operations)"
+      },
+      {
+        "command": "appsyncTestGen.generateTestsByRegex",
+        "title": "AppSync: Generate Tests (Regex Filter)"
+      },
+      {
+        "command": "appsyncTestGen.generateTestsForCurrent",
+        "title": "AppSync: Generate Tests (Current Operation)"
+      },
+      {
+        "command": "appsyncTestGen.toggleStatusBar",
+        "title": "AppSync: Toggle Status Bar"
+      },
+      {
+        "command": "appsyncTestGen.materializeTestsFromPlans",
+        "title": "AppSync: Materialize Test Files from Plans"
+      },
+      {
+        "command": "appsyncTestGen.chooseLlmProvider",
+        "title": "AppSync: Choose LLM Provider"
+      },
+      {
+        "command": "appsyncTestGen.chooseLlmModel",
+        "title": "AppSync: Choose LLM Model"
+      },
+      {
+        "command": "appsyncTestGen.setLlmBaseUrl",
+        "title": "AppSync: Set LLM Base URL (for Compat/OpenAI proxies)"
+      },
+      {
+        "command": "appsyncTestGen.openWorkspacePrompt",
+        "title": "AppSync: Open Workspace Prompt"
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "AppSync TestGen",
+      "properties": {
+        "appsyncTestGen.secrets.persist": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, store secrets in VS Code SecretStorage (or workspace file if backend=workspaceFile)."
+        },
+        "appsyncTestGen.secrets.backend": {
+          "type": "string",
+          "enum": [
+            "secretStorage",
+            "workspaceFile"
+          ],
+          "default": "secretStorage",
+          "description": "Where to persist secrets if persist=true."
+        },
+        "appsyncTestGen.lastEndpoint": {
+          "type": "string",
+          "default": "",
+          "description": "Remembers the last AppSync endpoint you entered (non-secret convenience)."
+        },
+        "appsyncTestGen.connection.profile": {
+          "type": "string",
+          "default": "",
+          "description": "Default AWS CLI profile to use for AWS Profile (SigV4) auth."
+        },
+        "appsyncTestGen.connection.region": {
+          "type": "string",
+          "default": "",
+          "description": "Default AWS region (e.g., us-east-1, ap-south-1)."
+        },
+        "appsyncTestGen.connection.defaultAuth": {
+          "type": "string",
+          "enum": [
+            "apikey",
+            "iam",
+            "iamProfile"
+          ],
+          "default": "iamProfile",
+          "description": "Default auth mode used by commands (can still be changed at runtime)."
+        },
+        "appsyncTestGen.llm.provider": {
+          "type": "string",
+          "enum": [
+            "openai",
+            "anthropic",
+            "bedrock",
+            "compat",
+            "gemini"
+          ],
+          "default": "openai",
+          "description": "Which LLM provider to use."
+        },
+        "appsyncTestGen.llm.baseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "OpenAI/compat base URL (e.g., https://api.your-llm.example/v1)."
+        },
+        "appsyncTestGen.llm.model": {
+          "type": "string",
+          "default": "",
+          "description": "Model name (e.g., gpt-4o-mini, claude-3-5-sonnet, gemini-1.5-pro)."
+        },
+        "appsyncTestGen.llm.streaming": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use token streaming when the provider supports it."
+        },
+        "appsyncTestGen.llm.temperature": {
+          "type": "number",
+          "default": 0.2,
+          "description": "Sampling temperature."
+        },
+        "appsyncTestGen.llm.maxTokens": {
+          "type": "number",
+          "default": 16384,
+          "description": "Max tokens for the response."
+        },
+        "appsyncTestGen.llm.region": {
+          "type": "string",
+          "default": "",
+          "description": "AWS region for Bedrock (only used when provider=bedrock)."
+        },
+        "appsyncTestGen.llm.profile": {
+          "type": "string",
+          "default": "",
+          "description": "AWS CLI profile for Bedrock (optional)."
+        },
+        "appsyncTestGen.llm.bedrockModelId": {
+          "type": "string",
+          "default": "anthropic.claude-3-5-sonnet-20240620-v1:0",
+          "description": "Bedrock modelId for Claude on Bedrock."
+        },
+        "appsyncTestGen.ui.statusBar.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show status bar item during generation."
+        },
+        "appsyncTestGen.tests.framework": {
+          "type": "string",
+          "enum": [
+            "jest",
+            "pytest"
+          ],
+          "default": "jest",
+          "description": "Default framework for materialized tests."
+        },
+        "appsyncTestGen.generation.minScenariosPerOperation": {
+          "type": "number",
+          "default": 4,
+          "description": "Minimum number of scenarios per operation to ensure. Baselines added: happy, validation (missing field), validation (invalid empty), not-found; extras are happy variants with different seeds."
+        },
+        "appsyncTestGen.reports.execView.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "When true, tests can emit an Executive Summary markdown (pytest) if the task sets APPSYNC_EXEC_VIEW=1."
+        },
+        "appsyncTestGen.reports.execView.fileName": {
+          "type": "string",
+          "default": "executive_report.md",
+          "description": "Filename for the Executive Summary markdown report (pytest)."
+        },
+        "appsyncTestGen.reports.artifacts.policy": {
+          "type": "string",
+          "enum": [
+            "onfail",
+            "all",
+            "off"
+          ],
+          "default": "onfail",
+          "description": "Artifact persistence policy used by shared clients (pytest). Map via APPSYNC_WRITE_ARTIFACTS in tasks."
+        },
+        "appsyncTestGen.reports.artifacts.dir": {
+          "type": "string",
+          "default": "artifacts",
+          "description": "Relative folder (under contexts root) for request/response artifacts (pytest). Map via APPSYNC_ARTIFACT_DIR in tasks."
+        },
+        "appsyncTestGen.tests.outputRoot": {
+          "type": "string",
+          "default": "contexts",
+          "description": "Where generated tests & shared scaffolds are written (absolute or workspace-relative)."
+        },
+        "appsyncTestGen.generation.extraPrompt": {
+          "type": "string",
+          "default": "",
+          "description": "Additional instructions appended to the LLM prompt for every operation (e.g., naming rules, auth expectations, assertion style)."
+        },
+        "appsyncTestGen.generation.extraPromptFile": {
+          "type": "string",
+          "default": "",
+          "description": "Path (absolute or workspace-relative) to a markdown/text file with extra generation rules. If set, its contents are appended to the prompt. Examples: .appsync-testgen/prompt.md, docs/testgen-rules.md"
+        },
+        "appsyncTestGen.generation.userGuidance": {
+          "type": "string",
+          "default": "",
+          "description": "Optional additional instructions for the LLM to follow when generating scenarios (e.g., domain rules, naming conventions)."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "tsc -p .",
+    "watch": "tsc -p . -w"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.90.0",
+    "typescript": "^5.4.0"
+  },
+  "dependencies": {
+    "@aws-crypto/sha256-js": "^5.2.0",
+    "@aws-sdk/client-appsync": "^3.864.0",
+    "@aws-sdk/credential-provider-node": "^3.617.0",
+    "@aws-sdk/credential-providers": "^3.617.0",
+    "@smithy/protocol-http": "^3.0.0",
+    "@smithy/signature-v4": "^3.0.0",
+    "graphql": "^16.11.0"
+  },
+  "optionalDependencies": {
+    "@anthropic-ai/sdk": "^0.21.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.864.0",
+    "@google/generative-ai": "^0.19.0",
+    "openai": "^4.104.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-name/appsync-testgen.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-name/appsync-testgen/issues"
+  },
+  "license": "Apache-2.0"
+}
