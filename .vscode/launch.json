@@ -1,0 +1,61 @@
+// v1 - launch.json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Extension (Watch)",
+      "type": "extensionHost",
+      "request": "launch",
+      "runtimeExecutable": "${execPath}",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/out/**/*.js"
+      ],
+      "preLaunchTask": "npm: watch",
+      "sourceMaps": true,
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "internalConsoleOptions": "openOnSessionStart"
+    },
+    {
+      "name": "Run Extension (Build once)",
+      "type": "extensionHost",
+      "request": "launch",
+      "runtimeExecutable": "${execPath}",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/out/**/*.js"
+      ],
+      "preLaunchTask": "npm: build",
+      "sourceMaps": true,
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "internalConsoleOptions": "openOnSessionStart"
+    },
+
+    /* Optional: debug your Node helper if you use scripts/test-runner.js */
+    {
+      "name": "Debug: Node test-runner.js",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/test-runner.js",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": {
+        // You can override or add env here while debugging the runner.
+        // "APPSYNC_ENDPOINT": "",
+        // "APPSYNC_API_KEY": ""
+      },
+      "autoAttachChildProcesses": true,
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
+    }
+  ]
+}

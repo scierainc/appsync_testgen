@@ -35,7 +35,7 @@
       },
       {
         "command": "appsyncTestGen.generateTestsForSelection",
-        "title": "AppSync: Generate Tests (Pick Operations)"
+        "title": "Generate Test Plans (Pick Operations)"
       },
       {
         "command": "appsyncTestGen.generateTestsByRegex",
@@ -215,9 +215,19 @@
           "description": "Where generated tests & shared scaffolds are written (absolute or workspace-relative)."
         },
         "appsyncTestGen.generation.extraPrompt": {
-          "type": "string",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ],
           "default": "",
-          "description": "Additional instructions appended to the LLM prompt for every operation (e.g., naming rules, auth expectations, assertion style)."
+          "description": "Additional instructions appended to the LLM prompt (string or array of strings)."
         },
         "appsyncTestGen.generation.extraPromptFile": {
           "type": "string",

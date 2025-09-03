@@ -1,12 +1,27 @@
 {
   "version": "2.0.0",
   "tasks": [
+    {
+      "label": "npm: build",
+      "type": "npm",
+      "script": "build",
+      "problemMatcher": "$tsc"
+    },
+    {
+      "label": "npm: watch",
+      "type": "npm",
+      "script": "watch",
+      "isBackground": true,
+      "problemMatcher": "$tsc-watch"
+    },
     /* -------------------- ONE-CLICK CHOOSER -------------------- */
     {
       "label": "Test: Run (choose framework/auth/scope)",
       "type": "shell",
       "command": "node",
-      "args": ["${workspaceFolder}/scripts/test-runner.js"],
+      "args": [
+        "${workspaceFolder}/scripts/test-runner.js"
+      ],
       "options": {
         "env": {
           "FRAMEWORK": "${input:FRAMEWORK}",
@@ -27,13 +42,16 @@
       "group": "test",
       "problemMatcher": []
     },
-
     /* -------------------- JEST (workspace) -------------------- */
     {
       "label": "Test: Jest (API Key, workspace)",
       "type": "shell",
       "command": "npx",
-      "args": ["jest", "--config", "${workspaceFolder}/jest.config.ts"],
+      "args": [
+        "jest",
+        "--config",
+        "${workspaceFolder}/jest.config.ts"
+      ],
       "options": {
         "env": {
           "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
@@ -49,7 +67,11 @@
       "label": "Test: Jest (IAM, workspace)",
       "type": "shell",
       "command": "npx",
-      "args": ["jest", "--config", "${workspaceFolder}/jest.config.ts"],
+      "args": [
+        "jest",
+        "--config",
+        "${workspaceFolder}/jest.config.ts"
+      ],
       "options": {
         "env": {
           "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
@@ -66,7 +88,11 @@
       "label": "Test: Jest (Cognito JWT, workspace)",
       "type": "shell",
       "command": "npx",
-      "args": ["jest", "--config", "${workspaceFolder}/jest.config.ts"],
+      "args": [
+        "jest",
+        "--config",
+        "${workspaceFolder}/jest.config.ts"
+      ],
       "options": {
         "env": {
           "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
@@ -82,7 +108,11 @@
       "label": "Test: Jest (Cognito user/pass, workspace)",
       "type": "shell",
       "command": "npx",
-      "args": ["jest", "--config", "${workspaceFolder}/jest.config.ts"],
+      "args": [
+        "jest",
+        "--config",
+        "${workspaceFolder}/jest.config.ts"
+      ],
       "options": {
         "env": {
           "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
@@ -97,7 +127,6 @@
       "group": "test",
       "problemMatcher": []
     },
-
     /* -------------------- JEST (external contexts) -------------------- */
     {
       "label": "Test: Jest (API Key, external)",
@@ -187,13 +216,16 @@
       "group": "test",
       "problemMatcher": []
     },
-
     /* -------------------- PYTEST (workspace) -------------------- */
     {
       "label": "Test: Pytest (API Key, workspace)",
       "type": "process",
       "command": "${config:python.defaultInterpreterPath}",
-      "args": ["-m", "pytest", "contexts"],
+      "args": [
+        "-m",
+        "pytest",
+        "contexts"
+      ],
       "options": {
         "env": {
           "PYTHONPATH": "${workspaceFolder}/contexts/_shared/pytest",
@@ -209,7 +241,11 @@
       "label": "Test: Pytest (IAM, workspace)",
       "type": "process",
       "command": "${config:python.defaultInterpreterPath}",
-      "args": ["-m", "pytest", "contexts"],
+      "args": [
+        "-m",
+        "pytest",
+        "contexts"
+      ],
       "options": {
         "env": {
           "PYTHONPATH": "${workspaceFolder}/contexts/_shared/pytest",
@@ -226,7 +262,11 @@
       "label": "Test: Pytest (Cognito JWT, workspace)",
       "type": "process",
       "command": "${config:python.defaultInterpreterPath}",
-      "args": ["-m", "pytest", "contexts"],
+      "args": [
+        "-m",
+        "pytest",
+        "contexts"
+      ],
       "options": {
         "env": {
           "PYTHONPATH": "${workspaceFolder}/contexts/_shared/pytest",
@@ -242,7 +282,11 @@
       "label": "Test: Pytest (Cognito user/pass, workspace)",
       "type": "process",
       "command": "${config:python.defaultInterpreterPath}",
-      "args": ["-m", "pytest", "contexts"],
+      "args": [
+        "-m",
+        "pytest",
+        "contexts"
+      ],
       "options": {
         "env": {
           "PYTHONPATH": "${workspaceFolder}/contexts/_shared/pytest",
@@ -257,13 +301,16 @@
       "group": "test",
       "problemMatcher": []
     },
-
     /* -------------------- PYTEST (external contexts) -------------------- */
     {
       "label": "Test: Pytest (API Key, external)",
       "type": "process",
       "command": "${config:python.defaultInterpreterPath}",
-      "args": ["-m", "pytest", "${input:CONTEXTS_ROOT}/contexts"],
+      "args": [
+        "-m",
+        "pytest",
+        "${input:CONTEXTS_ROOT}/contexts"
+      ],
       "options": {
         "env": {
           "PYTHONPATH": "${input:CONTEXTS_ROOT}/contexts/_shared/pytest",
@@ -279,7 +326,11 @@
       "label": "Test: Pytest (IAM, external)",
       "type": "process",
       "command": "${config:python.defaultInterpreterPath}",
-      "args": ["-m", "pytest", "${input:CONTEXTS_ROOT}/contexts"],
+      "args": [
+        "-m",
+        "pytest",
+        "${input:CONTEXTS_ROOT}/contexts"
+      ],
       "options": {
         "env": {
           "PYTHONPATH": "${input:CONTEXTS_ROOT}/contexts/_shared/pytest",
@@ -296,7 +347,11 @@
       "label": "Test: Pytest (Cognito JWT, external)",
       "type": "process",
       "command": "${config:python.defaultInterpreterPath}",
-      "args": ["-m", "pytest", "${input:CONTEXTS_ROOT}/contexts"],
+      "args": [
+        "-m",
+        "pytest",
+        "${input:CONTEXTS_ROOT}/contexts"
+      ],
       "options": {
         "env": {
           "PYTHONPATH": "${input:CONTEXTS_ROOT}/contexts/_shared/pytest",
@@ -312,7 +367,11 @@
       "label": "Test: Pytest (Cognito user/pass, external)",
       "type": "process",
       "command": "${config:python.defaultInterpreterPath}",
-      "args": ["-m", "pytest", "${input:CONTEXTS_ROOT}/contexts"],
+      "args": [
+        "-m",
+        "pytest",
+        "${input:CONTEXTS_ROOT}/contexts"
+      ],
       "options": {
         "env": {
           "PYTHONPATH": "${input:CONTEXTS_ROOT}/contexts/_shared/pytest",
@@ -327,7 +386,6 @@
       "group": "test",
       "problemMatcher": []
     },
-
     /* -------------------- PYTEST (testsRoot via config) -------------------- */
     {
       "label": "Test: Pytest (API Key, testsRoot)",
@@ -358,21 +416,32 @@
       "id": "FRAMEWORK",
       "type": "pickString",
       "description": "Choose test framework",
-      "options": ["jest", "pytest"],
+      "options": [
+        "jest",
+        "pytest"
+      ],
       "default": "jest"
     },
     {
       "id": "SCOPE",
       "type": "pickString",
       "description": "Where are the contexts?",
-      "options": ["workspace", "external"],
+      "options": [
+        "workspace",
+        "external"
+      ],
       "default": "workspace"
     },
     {
       "id": "AUTH_CHOICE",
       "type": "pickString",
       "description": "Auth mode",
-      "options": ["API_KEY", "IAM", "COGNITO_JWT", "COGNITO_UP"],
+      "options": [
+        "API_KEY",
+        "IAM",
+        "COGNITO_JWT",
+        "COGNITO_UP"
+      ],
       "default": "API_KEY"
     },
     {

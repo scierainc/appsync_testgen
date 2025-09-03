@@ -1,3 +1,32 @@
 {
-  "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+  "python.defaultInterpreterPath": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+  // "appsyncTestGen.generation.extraPromptFile": ".appsync-testgen/prompt.md",
+  "appsyncTestGen.generation.extraPrompt": [
+    "Additional Logic for connecting to AppSync when running tests:",
+      "Generate the technical specifications for an HTTP request to execute a GraphQL mutation. The output should detail all the necessary components so it can be implemented in any programming language (e.g., Python, JavaScript) or API client (e.g., Postman, Insomnia).",
+        "1. HTTP Request Method:POST",
+        "2. Endpoint URL:https://qmzcwybsovbuhg3qncl5ovwxwe.appsync-api.us-east-1.amazonaws.com/graphql",
+        "3. Required HTTP Headers:",
+        "Provide a key-value map of the following headers:",
+        "Accept: application/graphql-response+json, application/json",
+        "Accept-Language: en-US,en;q=0.9",
+        "Authorization: \"<YOUR_JWT_AUTHORIZATION_TOKEN>\" (Use this placeholder).",
+        "Cache-Control: no-cache",
+        "Content-Type: application/json",
+        "CurrentRole: sciera-admin",
+        "DNT: 1",
+        "ExamMode: SAT",
+        "Origin: https://admin-test.edu-practica.com",
+        "Pragma: no-cache",
+        "Referer: https://admin-test.edu-practica.com/",
+        "Request-Id: 43b7e31b-1022-4330-b12a-ec7c1302a6c3",
+        "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+        "(Include any other necessary sec- prefixed headers, like sec-fetch-mode, etc., as required by the endpoint's CORS policy).",
+
+    "Test cases should follow these conventions:",
+    "• Name scenarios kebab-case with prefixes: happy-, validation-, notfound-, auth-.",
+    "• Always include one test with missing required field and one with empty-string invalid.",
+    "• For errors, assert AppSync top-level `errors` OR field-level error object, whichever applies.",
+    "• Prefer minimal selection sets; only assert fields you select."
+  ]
 }
