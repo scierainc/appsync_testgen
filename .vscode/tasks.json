@@ -301,6 +301,109 @@
       "group": "test",
       "problemMatcher": []
     },
+    {
+      "label": "Test: Pytest (API Key, workspace) + Allure",
+      "type": "process",
+      "command": "${config:python.defaultInterpreterPath}",
+      "args": [
+        "-m",
+        "pytest",
+        "contexts",
+        "--alluredir",
+        "${workspaceFolder}/allure-results"
+      ],
+      "options": {
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}/contexts/_shared/pytest",
+          "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
+          "APPSYNC_AUTH_MODE": "API_KEY",
+          "APPSYNC_API_KEY": "${input:APPSYNC_API_KEY}"
+        }
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Pytest (IAM, workspace) + Allure",
+      "type": "process",
+      "command": "${config:python.defaultInterpreterPath}",
+      "args": [
+        "-m",
+        "pytest",
+        "contexts",
+        "--alluredir",
+        "${workspaceFolder}/allure-results"
+      ],
+      "options": {
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}/contexts/_shared/pytest",
+          "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
+          "APPSYNC_AUTH_MODE": "IAM",
+          "AWS_REGION": "${input:AWS_REGION}",
+          "AWS_PROFILE": "${input:AWS_PROFILE}"
+        }
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Pytest (Cognito JWT, workspace) + Allure",
+      "type": "process",
+      "command": "${config:python.defaultInterpreterPath}",
+      "args": [
+        "-m",
+        "pytest",
+        "contexts",
+        "--alluredir",
+        "${workspaceFolder}/allure-results"
+      ],
+      "options": {
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}/contexts/_shared/pytest",
+          "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
+          "APPSYNC_AUTH_MODE": "COGNITO",
+          "APPSYNC_JWT": "${input:APPSYNC_JWT}"
+        }
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Allure: Serve (workspace results)",
+      "type": "shell",
+      "command": "npx",
+      "args": [
+        "allure",
+        "serve",
+        "${workspaceFolder}/allure-results"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Allure: Generate static report (workspace)",
+      "type": "shell",
+      "command": "npx",
+      "args": [
+        "allure",
+        "generate",
+        "${workspaceFolder}/allure-results",
+        "--clean",
+        "-o",
+        "${workspaceFolder}/allure-report"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Allure: Open static report (workspace)",
+      "type": "shell",
+      "command": "npx",
+      "args": [
+        "allure",
+        "open",
+        "${workspaceFolder}/allure-report"
+      ],
+      "problemMatcher": []
+    },
     /* -------------------- PYTEST (external contexts) -------------------- */
     {
       "label": "Test: Pytest (API Key, external)",
@@ -384,6 +487,110 @@
         }
       },
       "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Pytest (API Key, external) + Allure",
+      "type": "process",
+      "command": "${config:python.defaultInterpreterPath}",
+      "args": [
+        "-m",
+        "pytest",
+        "${input:CONTEXTS_ROOT}/contexts",
+        "--alluredir",
+        "${input:CONTEXTS_ROOT}/allure-results"
+      ],
+      "options": {
+        "env": {
+          "PYTHONPATH": "${input:CONTEXTS_ROOT}/contexts/_shared/pytest",
+          "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
+          "APPSYNC_AUTH_MODE": "API_KEY",
+          "APPSYNC_API_KEY": "${input:APPSYNC_API_KEY}"
+        }
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Pytest (IAM, external) + Allure",
+      "type": "process",
+      "command": "${config:python.defaultInterpreterPath}",
+      "args": [
+        "-m",
+        "pytest",
+        "${input:CONTEXTS_ROOT}/contexts",
+        "--alluredir",
+        "${input:CONTEXTS_ROOT}/allure-results"
+      ],
+      "options": {
+        "env": {
+          "PYTHONPATH": "${input:CONTEXTS_ROOT}/contexts/_shared/pytest",
+          "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
+          "APPSYNC_AUTH_MODE": "IAM",
+          "AWS_REGION": "${input:AWS_REGION}",
+          "AWS_PROFILE": "${input:AWS_PROFILE}"
+        }
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Pytest (Cognito JWT, external) + Allure",
+      "type": "process",
+      "command": "${config:python.defaultInterpreterPath}",
+      "args": [
+        "-m",
+        "pytest",
+        "${input:CONTEXTS_ROOT}/contexts",
+        "--alluredir",
+        "${input:CONTEXTS_ROOT}/allure-results"
+      ],
+      "options": {
+        "env": {
+          "PYTHONPATH": "${input:CONTEXTS_ROOT}/contexts/_shared/pytest",
+          "APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}",
+          "APPSYNC_AUTH_MODE": "COGNITO",
+          "APPSYNC_JWT": "${input:APPSYNC_JWT}"
+        }
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    /* Allure (external) */
+    {
+      "label": "Allure: Serve (external results)",
+      "type": "shell",
+      "command": "npx",
+      "args": [
+        "allure",
+        "serve",
+        "${input:CONTEXTS_ROOT}/allure-results"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Allure: Generate static report (external)",
+      "type": "shell",
+      "command": "npx",
+      "args": [
+        "allure",
+        "generate",
+        "${input:CONTEXTS_ROOT}/allure-results",
+        "--clean",
+        "-o",
+        "${input:CONTEXTS_ROOT}/allure-report"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Allure: Open static report (external)",
+      "type": "shell",
+      "command": "npx",
+      "args": [
+        "allure",
+        "open",
+        "${input:CONTEXTS_ROOT}/allure-report"
+      ],
       "problemMatcher": []
     },
     /* -------------------- PYTEST (testsRoot via config) -------------------- */

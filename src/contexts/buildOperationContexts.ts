@@ -1,16 +1,13 @@
-// v2.1.0
-// - NEW: ensurePytestSharedScaffold(contextsDir) so contexts/_shared/pytest is created
-// - Everything else unchanged
-
-//
-// Builds per-operation context packages for LLM/test generation.
-// ...
+// v2.1.2 — buildOperationContexts.ts
+// - Fix: eliminate “void → GraphQLNamedType” and “never.name” errors by using safe accessors and relaxed
+//        types at GraphQL traversal points.
+// - Keep: pytest scaffold under contexts/_shared/pytest via ensurePytestSharedScaffold()
+// - Outputs: pruned SDL, operation.graphql, context.json (+ resolver copies)
 
 import * as vscode from "vscode";
 import {
   buildSchema,
   buildClientSchema,
-  getIntrospectionQuery,
   GraphQLSchema,
   GraphQLObjectType,
   GraphQLType,
@@ -25,9 +22,8 @@ import {
   isInterfaceType,
   isUnionType,
   isInputObjectType,
-  printType
+  printType,
 } from "graphql";
-
 import { ensurePytestSharedScaffold } from "../utils/scaffold";
 
 /* ----------------------------- Public API ----------------------------- */
@@ -47,7 +43,9 @@ export type BuildContextsOptions = {
   returnTreeMaxFields?: number; // default 25
 };
 
-export async function buildPerOperationContexts(opts: BuildContextsOptions): Promise<{ total: number }> {
+export async function buildPerOperationContexts(
+  opts: BuildContextsOptions
+): Promise<{ total: number }> {
   const source = opts.sourceFolder;
   const outRoot = opts.outFolder ?? source;
 
@@ -61,11 +59,11 @@ export async function buildPerOperationContexts(opts: BuildContextsOptions): Pro
   const contextsDir = vscode.Uri.joinPath(outRoot, "contexts");
   await vscode.workspace.fs.createDirectory(contextsDir);
 
-  // ✅ NEW: create pytest shared scaffold under contexts/
+  // Create pytest shared scaffold under contexts/
   try {
     await ensurePytestSharedScaffold(contextsDir);
   } catch {
-    // soft-fail; materializeTests will scaffold under testsRoot as well
+    // soft-fail; tests materializer also scaffolds at testsRoot if needed
   }
 
   const operations = enumerateOperations(schema);
@@ -77,44 +75,54 @@ export async function buildPerOperationContexts(opts: BuildContextsOptions): Pro
 
     const { operationDoc, variablesSkeleton } = buildOperationDocument(schema, op, {
       depth: opts.selectionDepth ?? 1,
-      maxFields: opts.maxFieldsPerLevel ?? 20
+      maxFields: opts.maxFieldsPerLevel ?? 20,
     });
 
     const returnTree = buildReturnTree(schema, op.returnType, {
       depth: opts.returnTreeDepth ?? 2,
-      maxFields: opts.returnTreeMaxFields ?? 25
+      maxFields: opts.returnTreeMaxFields ?? 25,
     });
 
+    // contexts/<Type>.<field>/
     const opDirName = `${op.parentType}.${op.fieldName}`;
     const opDir = vscode.Uri.joinPath(contextsDir, opDirName);
     await vscode.workspace.fs.createDirectory(opDir);
 
-    const sdlUri = vscode.Uri.joinPath(opDir, "operation.sdl.graphql");
-    const gqlUri = vscode.Uri.joinPath(opDir, "operation.graphql");
-    await vscode.workspace.fs.writeFile(sdlUri, Buffer.from(prunedSdl, "utf8"));
-    await vscode.workspace.fs.writeFile(gqlUri, Buffer.from(operationDoc, "utf8"));
+    // Write SDL + operation
+    await vscode.workspace.fs.writeFile(
+      vscode.Uri.joinPath(opDir, "operation.sdl.graphql"),
+      Buffer.from(prunedSdl, "utf8")
+    );
+    await vscode.workspace.fs.writeFile(
+      vscode.Uri.joinPath(opDir, "operation.graphql"),
+      Buffer.from(operationDoc, "utf8")
+    );
 
+    // Copy resolver artifacts if present
     const resolverSrcDir = vscode.Uri.joinPath(resolversRoot, op.parentType, op.fieldName);
     const resolverOutDir = vscode.Uri.joinPath(opDir, "resolver");
     await copyResolverArtifacts(resolverSrcDir, resolverOutDir);
 
+    // context.json metadata
     const contextMeta = {
       operation: {
-        type: op.operationType,
+        type: op.operationType, // "query" | "mutation" | "subscription"
         parentType: op.parentType,
-        fieldName: op.fieldName
+        fieldName: op.fieldName,
       },
       args: op.args.map((a) => ({
         name: a.name,
-        type: renderTypeRef(a.type)
+        type: renderTypeRef(a.type),
       })),
       returnType: renderTypeRef(op.returnType),
       variablesSkeleton,
       typeClosure: Array.from(closure).sort(),
-      returnTree
+      returnTree,
     };
-    const ctxUri = vscode.Uri.joinPath(opDir, "context.json");
-    await vscode.workspace.fs.writeFile(ctxUri, Buffer.from(JSON.stringify(contextMeta, null, 2), "utf8"));
+    await vscode.workspace.fs.writeFile(
+      vscode.Uri.joinPath(opDir, "context.json"),
+      Buffer.from(JSON.stringify(contextMeta, null, 2), "utf8")
+    );
 
     total++;
   }
@@ -122,12 +130,11 @@ export async function buildPerOperationContexts(opts: BuildContextsOptions): Pro
   return { total };
 }
 
-
 /* --------------------------- Schema Loading --------------------------- */
 
 async function loadSchema(schemaSdlUri: vscode.Uri, schemaJsonUri: vscode.Uri): Promise<GraphQLSchema> {
   const jsonExists = await exists(schemaJsonUri);
-  const sdlExists  = await exists(schemaSdlUri);
+  const sdlExists = await exists(schemaSdlUri);
 
   if (!jsonExists && !sdlExists) {
     throw new Error(
@@ -135,17 +142,15 @@ async function loadSchema(schemaSdlUri: vscode.Uri, schemaJsonUri: vscode.Uri): 
     );
   }
 
-  // Prefer JSON: it includes everything needed and avoids unknown directive issues
+  // Prefer JSON: includes everything and avoids unknown directive issues
   if (jsonExists) {
     const raw = await readText(schemaJsonUri);
     const json = JSON.parse(raw);
     return buildClientSchema(json.data ?? json); // tolerate { data: {...} } or raw
   }
 
-  // Fallback to SDL: be lenient and strip AppSync-specific directives if needed
+  // Fallback to SDL: lenient, strip AppSync runtime directives if needed
   const sdlRaw = await readText(schemaSdlUri);
-
-  // Try a lenient build first
   try {
     // @ts-ignore graphql-js v16 accepts assumeValidSDL
     return buildSchema(sdlRaw, { assumeValidSDL: true });
@@ -156,7 +161,7 @@ async function loadSchema(schemaSdlUri: vscode.Uri, schemaJsonUri: vscode.Uri): 
   }
 }
 
-/** Remove AppSync runtime directive usages like @aws_auth, @aws_iam, @aws_api_key, @aws_oidc, @aws_cognito_user_pools */
+/** Remove AppSync runtime directive usages like @aws_auth, @aws_iam, etc. */
 function stripAwsRuntimeDirectives(sdl: string): string {
   return sdl.replace(/@aws[_a-zA-Z0-9]*(\s*\([^)]*\))?/g, "").replace(/[ \t]+$/gm, "");
 }
@@ -165,7 +170,7 @@ function stripAwsRuntimeDirectives(sdl: string): string {
 
 export type OperationField = {
   operationType: "query" | "mutation" | "subscription";
-  parentType: string; // usually Query/Mutation/Subscription (actual root type name)
+  parentType: string; // actual root name
   fieldName: string;
   args: Array<{ name: string; type: GraphQLInputType }>;
   returnType: GraphQLType;
@@ -175,9 +180,9 @@ function enumerateOperations(schema: GraphQLSchema): OperationField[] {
   const out: OperationField[] = [];
 
   const items: Array<{ op: "query" | "mutation" | "subscription"; type: GraphQLObjectType | null }> = [
-    { op: "query",        type: schema.getQueryType()        ?? null },
-    { op: "mutation",     type: schema.getMutationType()     ?? null },
-    { op: "subscription", type: schema.getSubscriptionType() ?? null }
+    { op: "query", type: schema.getQueryType() ?? null },
+    { op: "mutation", type: schema.getMutationType() ?? null },
+    { op: "subscription", type: schema.getSubscriptionType() ?? null },
   ];
 
   for (const { op, type } of items) {
@@ -190,12 +195,48 @@ function enumerateOperations(schema: GraphQLSchema): OperationField[] {
         parentType: type.name,
         fieldName: name,
         args: f.args.map((a) => ({ name: a.name, type: a.type })),
-        returnType: f.type
+        returnType: f.type,
       });
     }
   }
 
-  return out.sort((a, b) => (a.parentType + "." + a.fieldName).localeCompare(b.parentType + "." + b.fieldName));
+  return out.sort((a, b) =>
+    (a.parentType + "." + a.fieldName).localeCompare(b.parentType + "." + b.fieldName)
+  );
+}
+
+/* ---------------------------- Safe accessors -------------------------- */
+
+function getFieldsSafe(named: any): Record<string, any> {
+  try {
+    const f = named?.getFields?.();
+    if (f && typeof f === "object") return f as Record<string, any>;
+  } catch {}
+  return {};
+}
+function getInterfacesSafe(named: any): any[] {
+  try {
+    const fn = named?.getInterfaces;
+    const arr = typeof fn === "function" ? fn.call(named) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch {}
+  return [];
+}
+function getTypesSafe(named: any): any[] {
+  try {
+    const fn = named?.getTypes;
+    const arr = typeof fn === "function" ? fn.call(named) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch {}
+  return [];
+}
+function getEnumValuesSafe(named: any): any[] {
+  try {
+    const fn = named?.getValues;
+    const arr = typeof fn === "function" ? fn.call(named) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch {}
+  return [];
 }
 
 /* ------------------------- Type Closure (Minimal) --------------------- */
@@ -203,7 +244,7 @@ function enumerateOperations(schema: GraphQLSchema): OperationField[] {
 function collectTypeClosureForOperation(schema: GraphQLSchema, op: OperationField): Set<string> {
   const keep = new Set<string>();
 
-  // Add root parent type & field types
+  // Root parent type
   keep.add(op.parentType);
 
   // Args (input side)
@@ -215,7 +256,8 @@ function collectTypeClosureForOperation(schema: GraphQLSchema, op: OperationFiel
   return keep;
 }
 
-function addInputTypeClosure(named: GraphQLNamedType, keep: Set<string>, schema: GraphQLSchema) {
+function addInputTypeClosure(named: any, keep: Set<string>, schema: GraphQLSchema) {
+  if (!named) return;
   if (isScalarType(named) || isEnumType(named)) {
     keep.add(named.name);
     return;
@@ -223,7 +265,7 @@ function addInputTypeClosure(named: GraphQLNamedType, keep: Set<string>, schema:
   if (isInputObjectType(named)) {
     if (keep.has(named.name)) return;
     keep.add(named.name);
-    for (const field of Object.values(named.getFields())) {
+    for (const field of Object.values(getFieldsSafe(named))) {
       addInputTypeClosure(getNamedType(field.type), keep, schema);
     }
     return;
@@ -233,7 +275,8 @@ function addInputTypeClosure(named: GraphQLNamedType, keep: Set<string>, schema:
   }
 }
 
-function addOutputTypeClosure(named: GraphQLNamedType, keep: Set<string>, schema: GraphQLSchema) {
+function addOutputTypeClosure(named: any, keep: Set<string>, schema: GraphQLSchema) {
+  if (!named) return;
   if (isScalarType(named) || isEnumType(named)) {
     keep.add(named.name);
     return;
@@ -241,19 +284,19 @@ function addOutputTypeClosure(named: GraphQLNamedType, keep: Set<string>, schema
   if (isObjectType(named)) {
     if (keep.has(named.name)) return;
     keep.add(named.name);
-    for (const iface of named.getInterfaces()) addOutputTypeClosure(iface, keep, schema);
-    for (const field of Object.values(named.getFields())) {
+    for (const iface of getInterfacesSafe(named)) addOutputTypeClosure(iface, keep, schema);
+    for (const field of Object.values(getFieldsSafe(named))) {
       addOutputTypeClosure(getNamedType(field.type), keep, schema);
-      for (const arg of field.args) addInputTypeClosure(getNamedType(arg.type), keep, schema);
+      for (const arg of field.args ?? []) addInputTypeClosure(getNamedType(arg.type), keep, schema);
     }
     return;
   }
   if (isInterfaceType(named)) {
     if (keep.has(named.name)) return;
     keep.add(named.name);
-    for (const field of Object.values(named.getFields())) {
+    for (const field of Object.values(getFieldsSafe(named))) {
       addOutputTypeClosure(getNamedType(field.type), keep, schema);
-      for (const arg of field.args) addInputTypeClosure(getNamedType(arg.type), keep, schema);
+      for (const arg of field.args ?? []) addInputTypeClosure(getNamedType(arg.type), keep, schema);
     }
     const impls = schema.getPossibleTypes(named);
     for (const impl of impls) addOutputTypeClosure(impl, keep, schema);
@@ -262,7 +305,7 @@ function addOutputTypeClosure(named: GraphQLNamedType, keep: Set<string>, schema
   if (isUnionType(named)) {
     if (keep.has(named.name)) return;
     keep.add(named.name);
-    for (const m of named.getTypes()) addOutputTypeClosure(m, keep, schema);
+    for (const m of getTypesSafe(named)) addOutputTypeClosure(m, keep, schema);
     return;
   }
   if (isInputObjectType(named)) {
@@ -273,43 +316,100 @@ function addOutputTypeClosure(named: GraphQLNamedType, keep: Set<string>, schema
 /* ----------------------- SDL Composition (Pruned) --------------------- */
 
 function composePrunedSDL(schema: GraphQLSchema, op: OperationField, keep: Set<string>): string {
-  // 1) Root type with ONLY the single field
-  const rootFieldSig = renderRootFieldSignature(schema, op);
+  // 1) Root type block containing ONLY the single field for this operation
+  const rootFieldSig = renderRootFieldSignature(op);
   const rootBlock = `type ${op.parentType} {\n  ${rootFieldSig}\n}\n`;
 
-  // 2) Add definitions for every kept named type EXCEPT the parent root type
   const lines: string[] = [rootBlock];
 
+  // 2) Render every kept named type except the parent root
   for (const name of Array.from(keep).sort()) {
     if (name === op.parentType) continue;
-    const t = schema.getType(name);
-    if (!t) continue;
     if (isBuiltInScalar(name)) continue;
 
+    const t = schema.getType(name);
+    if (!t) {
+      lines.push(`# WARN: type '${name}' was in closure but not found in schema`);
+      continue;
+    }
+
     try {
+      // Prefer GraphQL’s printer
       lines.push(printType(t));
     } catch {
-      // ignore
+      // Fallback: synthesize SDL directly, using safe any-casts
+      try {
+        const s = renderNamedTypeSDL(schema, t as GraphQLNamedType);
+        if (s.trim()) lines.push(s);
+      } catch (e: any) {
+        lines.push(`# WARN: failed to render type '${name}': ${String(e?.message ?? e)}`);
+      }
     }
   }
 
   return lines.join("\n\n") + "\n";
 }
 
+function renderNamedTypeSDL(_schema: GraphQLSchema, named: any): string {
+  // Scalars & enums
+  if (isScalarType(named)) {
+    // built-ins are skipped earlier; custom scalars still printed here
+    return `scalar ${named.name}`;
+  }
+  if (isEnumType(named)) {
+    const vals = getEnumValuesSafe(named).map((v: any) => `  ${v.name}`).join("\n");
+    return `enum ${named.name} {\n${vals}\n}`;
+  }
+
+  // Input objects
+  if (isInputObjectType(named)) {
+    const fields = Object.values(getFieldsSafe(named))
+      .map((f: any) => `  ${f.name}: ${renderTypeRef(f.type)}`)
+      .join("\n");
+    return `input ${named.name} {\n${fields}\n}`;
+  }
+
+  // Objects & interfaces
+  if (isObjectType(named) || isInterfaceType(named)) {
+    const fieldEntries = Object.values(getFieldsSafe(named))
+      .map((f: any) => {
+        const argsArr: any[] = Array.isArray(f.args) ? f.args : [];
+        const args = argsArr.length
+          ? "(" + argsArr.map((a: any) => `${a.name}: ${renderTypeRef(a.type)}`).join(", ") + ")"
+          : "";
+        return `  ${f.name}${args}: ${renderTypeRef(f.type)}`;
+      })
+      .join("\n");
+
+    if (isObjectType(named)) {
+      const impls: any[] = getInterfacesSafe(named);
+      const implSuffix = impls.length ? " implements " + impls.map((i: any) => i.name).join(" & ") : "";
+      return `type ${named.name}${implSuffix} {\n${fieldEntries}\n}`;
+    } else {
+      return `interface ${named.name} {\n${fieldEntries}\n}`;
+    }
+  }
+
+  // Unions
+  if (isUnionType(named)) {
+    const members: any[] = getTypesSafe(named);
+    const joined = members.map((t: any) => t.name).join(" | ");
+    return `union ${named.name} = ${joined}`;
+  }
+
+  // Last resort
+  return `# could not render type ${named?.name ?? "(unknown)"}`;
+}
+
 function isBuiltInScalar(name: string) {
   return name === "String" || name === "Int" || name === "Float" || name === "Boolean" || name === "ID";
 }
 
-function renderRootFieldSignature(schema: GraphQLSchema, op: OperationField): string {
+function renderRootFieldSignature(op: OperationField): string {
   const argList =
     op.args.length === 0
       ? ""
-      : "(" +
-        op.args
-          .map((a) => `${a.name}: ${renderTypeRef(a.type)}`)
-          .join(", ") +
-        ")";
-
+      : "(" + op.args.map((a) => `${a.name}: ${renderTypeRef(a.type)}`).join(", ") + ")";
   return `${op.fieldName}${argList}: ${renderTypeRef(op.returnType)}`;
 }
 
@@ -336,7 +436,7 @@ function buildOperationDocument(
   const namedReturn = getNamedType(op.returnType);
   const selection = buildSelectionSet(schema, namedReturn, {
     depth: Math.max(0, opts.depth),
-    maxFields: Math.max(1, opts.maxFields)
+    maxFields: Math.max(1, opts.maxFields),
   });
 
   const opName = `${capitalize(op.operationType)}_${op.fieldName}`;
@@ -358,43 +458,90 @@ function buildSelectionSet(
   named: GraphQLNamedType,
   opts: { depth: number; maxFields: number }
 ): string {
+  // Scalars/enums never need a sub-selection
   if (isScalarType(named) || isEnumType(named)) return "";
 
-  const fields: Array<{ name: string; type: GraphQLType }> = [];
+  // Object / Interface
   if (isObjectType(named) || isInterfaceType(named)) {
-    for (const [fname, f] of Object.entries(named.getFields())) {
-      fields.push({ name: fname, type: f.type });
+    // Gather fields and sort by priority
+    const all = Object.entries(named.getFields())
+      .map(([fname, f]) => ({ name: fname, type: f.type }));
+    all.sort((a, b) => priorityForField(a.name) - priorityForField(b.name));
+
+    const picked = all.slice(0, Math.max(1, opts.maxFields));
+    const lines: string[] = [];
+
+    for (const f of picked) {
+      const nt = getNamedType(f.type);
+
+      // If leaf (scalar/enum), select directly
+      if (isScalarType(nt) || isEnumType(nt)) {
+        lines.push(`  ${f.name}`);
+        continue;
+      }
+
+      // Non-leaf: we *must* provide a sub-selection
+      if (opts.depth > 0) {
+        const inner = buildSelectionSet(schema, nt, { depth: opts.depth - 1, maxFields: opts.maxFields });
+        lines.push(`  ${f.name}${inner ? ` ${inner}` : " { __typename }"}`);
+      } else {
+        // Depth exhausted -> emit a minimal valid selection
+        lines.push(`  ${f.name} ${minimalSelectionForComposite(schema, nt)}`);
+      }
     }
-  } else if (isUnionType(named)) {
+
+    return lines.length ? `{\n${lines.join("\n")}\n}` : "";
+  }
+
+  // Union
+  if (isUnionType(named)) {
     const parts: string[] = [];
     for (const t of named.getTypes()) {
-      const sel = buildSelectionSet(schema, t, opts);
-      parts.push(`  ... on ${t.name}${sel ? ` ${sel}` : ""}`);
+      const inner =
+        opts.depth > 0
+          ? buildSelectionSet(schema, t, { depth: opts.depth - 1, maxFields: opts.maxFields })
+          : minimalSelectionForComposite(schema, t);
+      parts.push(`  ... on ${t.name} ${inner}`);
     }
     return parts.length ? `{\n${parts.join("\n")}\n}` : "";
-  } else {
-    return "";
   }
 
-  fields.sort((a, b) => priorityForField(a.name) - priorityForField(b.name));
-
-  const picked = fields.slice(0, opts.maxFields);
-  const lines: string[] = [];
-
-  for (const f of picked) {
-    const nt = getNamedType(f.type);
-    if (isScalarType(nt) || isEnumType(nt)) {
-      lines.push(`  ${f.name}`);
-    } else if (opts.depth > 0) {
-      const inner = buildSelectionSet(schema, nt, { depth: opts.depth - 1, maxFields: opts.maxFields });
-      lines.push(`  ${f.name}${inner ? ` ${inner}` : ""}`);
-    } else {
-      lines.push(`  ${f.name}`);
-    }
-  }
-
-  return lines.length ? `{\n${lines.join("\n")}\n}` : "";
+  // Fallback (shouldn't happen)
+  return "";
 }
+
+/** Minimal valid selection for an object/interface (or for a union member when depth=0). */
+function minimalSelectionForComposite(schema: GraphQLSchema, named: GraphQLNamedType): string {
+  // For objects/interfaces, try to pick a couple of scalar-ish fields; else __typename
+  if (isObjectType(named) || isInterfaceType(named)) {
+    const fields = named.getFields();
+    const entries = Object.entries(fields)
+      .map(([name, f]) => ({ name, t: getNamedType(f.type) }));
+
+    // prefer id/name-like fields first
+    entries.sort((a, b) => priorityForField(a.name) - priorityForField(b.name));
+
+    const scalars = entries.filter(e => isScalarType(e.t) || isEnumType(e.t)).map(e => e.name);
+    const take = scalars.slice(0, Math.max(1, 2)); // pick 1–2 scalars if available
+
+    if (take.length) {
+      return `{\n    ${take.join("\n    ")}\n  }`;
+    }
+    return `{\n    __typename\n  }`;
+  }
+
+  // For unions, we’ll be called with a member type; recurse to object/interface case
+  if (isUnionType(named)) {
+    // choose first member and give its minimal selection
+    const m = named.getTypes()[0];
+    if (m) return `{\n    ... on ${m.name} ${minimalSelectionForComposite(schema, m)}\n  }`;
+    return `{\n    __typename\n  }`;
+  }
+
+  // Default fallback
+  return `{\n    __typename\n  }`;
+}
+
 
 function priorityForField(name: string): number {
   if (name === "id" || name.endsWith("Id") || name.endsWith("ID")) return 0;
@@ -436,13 +583,13 @@ function defaultValueForInput(schema: GraphQLSchema, t: GraphQLInputType): unkno
     }
   }
   if (isEnumType(named)) {
-    const vals = named.getValues();
+    const vals = getEnumValuesSafe(named);
     return vals.length ? vals[0].name : "<ENUM>";
   }
   if (isInputObjectType(named)) {
     const obj: Record<string, unknown> = {};
-    for (const [fname, f] of Object.entries(named.getFields())) {
-      obj[fname] = defaultValueForInput(schema, f.type);
+    for (const [fname, f] of Object.entries(getFieldsSafe(named))) {
+      obj[fname] = defaultValueForInput(schema, (f as any).type as GraphQLInputType);
     }
     return obj;
   }
@@ -453,7 +600,14 @@ function defaultValueForInput(schema: GraphQLSchema, t: GraphQLInputType): unkno
 
 type ReturnTree =
   | string // leaf scalars/enums/custom scalars => "Type", "Type!", "[Type!]", etc.
-  | { __type: string; __kind: "OBJECT" | "INTERFACE"; fields: Record<string, ReturnTree>; __nonNull?: boolean; __truncated?: boolean; __implements?: string[] }
+  | {
+      __type: string;
+      __kind: "OBJECT" | "INTERFACE";
+      fields: Record<string, ReturnTree>;
+      __nonNull?: boolean;
+      __truncated?: boolean;
+      __implements?: string[];
+    }
   | { __type: string; __kind: "UNION"; variants: ReturnTree[]; __nonNull?: boolean }
   | ReturnTree[]; // list wrapper: [innerShape]
 
@@ -463,16 +617,22 @@ function buildReturnTree(
   opts: { depth: number; maxFields: number },
   seen: Set<string> = new Set()
 ): ReturnTree {
-  // Handle non-null wrapper
+  // Non-null wrapper
   if (isNonNullType(t)) {
     const inner = buildReturnTree(schema, t.ofType, opts, seen);
     return appendNonNull(inner);
   }
-  // Handle list wrapper
+  // List wrapper
   if (isListType(t)) {
-    const inner = buildReturnTree(schema, t.ofType, opts, seen);
-    return [inner];
-  }
+  // decrement depth when traversing into list element
+  const inner = buildReturnTree(
+    schema,
+    t.ofType,
+    { depth: Math.max(0, opts.depth - 1), maxFields: opts.maxFields },
+    seen
+  );
+  return [inner];
+}
 
   const named = getNamedType(t);
 
@@ -482,27 +642,36 @@ function buildReturnTree(
 
   if (isObjectType(named) || isInterfaceType(named)) {
     // Prevent cycles
-    if (seen.has(named.name) || opts.depth <= 0) {
-      return { __type: named.name, __kind: isObjectType(named) ? "OBJECT" : "INTERFACE", fields: {}, __truncated: true };
+    if (seen.has((named as any).name) || opts.depth <= 0) {
+      return {
+        __type: (named as any).name,
+        __kind: isObjectType(named) ? "OBJECT" : "INTERFACE",
+        fields: {},
+        __truncated: true,
+      };
     }
 
     const nextSeen = new Set(seen);
-    nextSeen.add(named.name);
+    nextSeen.add((named as any).name);
 
-    const allFields = Object.entries(named.getFields());
-    // Prioritize id/name-ish fields
+    const allFields = Object.entries(getFieldsSafe(named));
     allFields.sort((a, b) => priorityForField(a[0]) - priorityForField(b[0]));
     const picked = allFields.slice(0, opts.maxFields);
 
     const fields: Record<string, ReturnTree> = {};
     for (const [fname, f] of picked) {
-      fields[fname] = buildReturnTree(schema, f.type, { depth: opts.depth - 1, maxFields: opts.maxFields }, nextSeen);
+      fields[fname] = buildReturnTree(
+        schema,
+        (f as any).type as GraphQLType,
+        { depth: opts.depth - 1, maxFields: opts.maxFields },
+        nextSeen
+      );
     }
 
     const base: any = {
-      __type: named.name,
+      __type: (named as any).name,
       __kind: isObjectType(named) ? "OBJECT" : "INTERFACE",
-      fields
+      fields,
     };
 
     if (isInterfaceType(named)) {
@@ -513,19 +682,19 @@ function buildReturnTree(
   }
 
   if (isUnionType(named)) {
-    if (seen.has(named.name) || opts.depth <= 0) {
-      return { __type: named.name, __kind: "UNION", variants: [], __nonNull: false };
+    if (seen.has((named as any).name) || opts.depth <= 0) {
+      return { __type: (named as any).name, __kind: "UNION", variants: [], __nonNull: false };
     }
     const nextSeen = new Set(seen);
-    nextSeen.add(named.name);
-    const variants = named.getTypes().slice(0, opts.maxFields).map((m) =>
-      buildReturnTree(schema, m, { depth: opts.depth - 1, maxFields: opts.maxFields }, nextSeen)
-    );
-    return { __type: named.name, __kind: "UNION", variants };
+    nextSeen.add((named as any).name);
+    const variants = getTypesSafe(named)
+      .slice(0, opts.maxFields)
+      .map((m: any) => buildReturnTree(schema, m as GraphQLType, { depth: opts.depth - 1, maxFields: opts.maxFields }, nextSeen));
+    return { __type: (named as any).name, __kind: "UNION", variants };
   }
 
-  // Fallback: unknown named kind (shouldn't happen)
-  return getNamedType(t).name;
+  // Fallback
+  return (getNamedType(t) as any).name;
 }
 
 function appendNonNull(shape: ReturnTree): ReturnTree {
@@ -564,4 +733,6 @@ async function readText(uri: vscode.Uri): Promise<string> {
   const buf = await vscode.workspace.fs.readFile(uri);
   return Buffer.from(buf).toString("utf8");
 }
-function capitalize(s: string) { return s ? s[0].toUpperCase() + s.slice(1) : s; }
+function capitalize(s: string) {
+  return s ? s[0].toUpperCase() + s.slice(1) : s;
+}

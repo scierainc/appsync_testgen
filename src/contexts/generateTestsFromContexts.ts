@@ -1,4 +1,4 @@
-// v6 - src/contexts/generateTestsFromContexts.ts
+// v10 - src/contexts/generateTestsFromContexts.ts
 import * as vscode from "vscode";
 import type { LlmMessage } from "../llm/types";
 import { createLlmClient } from "../llm/factory";
@@ -9,6 +9,8 @@ import {
   makeInvalidEmptyString,
 } from "./coverage";
 import { loadExtraPromptForOperation } from "../utils/promptLoader";
+import { loadResolverHints, type ResolverHints } from "../utils/resolverSummary";
+import { buildSchema, parse, validate, GraphQLError } from "graphql";
 
 type OpType = "query" | "mutation" | "subscription";
 
@@ -30,8 +32,10 @@ type Plan = {
     headers?: Record<string, string>;
     scenarios: Scenario[];
   }>;
+  meta?: any;
 };
 
+/* -------------------------------- FS utils ------------------------------- */
 async function exists(uri: vscode.Uri): Promise<boolean> {
   try { await vscode.workspace.fs.stat(uri); return true; } catch { return false; }
 }
@@ -49,6 +53,7 @@ async function listOperationDirs(contextsRoot: vscode.Uri): Promise<vscode.Uri[]
   return out.sort((a, b) => a.path.localeCompare(b.path));
 }
 
+/* ----------------------------- JSON helpers ------------------------------ */
 function stripFence(s: string) {
   const t = s.trim();
   if (t.startsWith("```")) {
@@ -57,6 +62,7 @@ function stripFence(s: string) {
   return t;
 }
 
+/* ----------------------------- Prompt helpers ---------------------------- */
 function renderReturnTreeGuidance(): string {
   return [
     "- Use `returnTree` to decide which fields to select in `gql` and which to assert in `expected`.",
@@ -72,6 +78,105 @@ function topFieldFromContext(ctx: any): string {
   return ctx?.operation?.fieldName || "result";
 }
 
+/** Deep clone for plain JSON-like values. */
+function jclone<T>(v: T): T { return JSON.parse(JSON.stringify(v)); }
+
+/** Return an array of candidate JSON paths for string-ish inputs (["input","name"], ["title"], …). */
+function collectStringyPaths(obj: any, maxDepth = 3): string[][] {
+  const out: string[][] = [];
+  const preferNames = new Set([
+    "name","title","description","email","phone","username","firstName","lastName",
+    "displayName","subject","message","text","body","content","label"
+  ]);
+  const isStrHint = (k: string, v: any) => {
+    const lk = k.toLowerCase();
+    if (preferNames.has(lk)) return true;
+    if (typeof v === "string") return true;
+    if (typeof v === "number" || typeof v === "boolean") return false;
+    if (typeof v === "string" && /^<.*?>$/.test(v)) return true; // placeholders
+    return false;
+  };
+
+  const visit = (val: any, path: string[], depth: number) => {
+    if (depth > maxDepth || val == null) return;
+    if (Array.isArray(val)) {
+      if (val.length > 0) visit(val[0], path.concat("0"), depth + 1);
+      return;
+    }
+    if (typeof val !== "object") return;
+    for (const [k, v] of Object.entries(val)) {
+      const p = path.concat(k);
+      if (isStrHint(k, v)) out.push(p);
+      if (typeof v === "object" && v != null) visit(v, p, depth + 1);
+    }
+  };
+  visit(obj, [], 0);
+
+  const score = (p: string[]) => {
+    const last = (p[p.length - 1] || "").toLowerCase();
+    if (last === "name") return 0;
+    if (last === "title") return 1;
+    if (last === "description") return 2;
+    if (last === "email") return 3;
+    if (last === "username") return 4;
+    return 10;
+  };
+  out.sort((a, b) => score(a) - score(b));
+  return out;
+}
+
+/** Find the best path to target given referenced arg names (from resolver) & stringy candidates. */
+function choosePreferredPath(candidates: string[][], referencedArgs?: string[]): string[] | undefined {
+  if (!candidates.length) return undefined;
+  const refs = (referencedArgs || []).map(s => s.toLowerCase());
+  if (refs.length) {
+    const hit = candidates.find(p => refs.includes((p[p.length - 1] || "").toLowerCase()));
+    if (hit) return hit;
+    const hit2 = candidates.find(p => p.some(seg => refs.includes(seg.toLowerCase())));
+    if (hit2) return hit2;
+  }
+  return candidates[0];
+}
+
+function getAtPath(obj: any, path: string[]): any {
+  let cur = obj;
+  for (const seg of path) {
+    if (cur == null) return undefined;
+    cur = cur[seg as any];
+  }
+  return cur;
+}
+function setAtPath(obj: any, path: string[], value: any): boolean {
+  if (!path.length) return false;
+  let cur = obj;
+  for (let i = 0; i < path.length - 1; i++) {
+    const seg = path[i];
+    if (cur[seg as any] == null || typeof cur[seg as any] !== "object") return false;
+    cur = cur[seg as any];
+  }
+  const leaf = path[path.length - 1];
+  if (cur && Object.prototype.hasOwnProperty.call(cur, leaf)) {
+    (cur as any)[leaf] = value;
+    return true;
+  }
+  return false;
+}
+function deleteAtPath(obj: any, path: string[]): boolean {
+  if (!path.length) return false;
+  let cur = obj;
+  for (let i = 0; i < path.length - 1; i++) {
+    const seg = path[i];
+    if (cur[seg as any] == null || typeof cur[seg as any] !== "object") return false;
+    cur = cur[seg as any];
+  }
+  const leaf = path[path.length - 1];
+  if (cur && Object.prototype.hasOwnProperty.call(cur, leaf)) {
+    delete (cur as any)[leaf];
+    return true;
+  }
+  return false;
+}
+
 function ensureCoverage(
   opName: string,
   opType: OpType,
@@ -79,7 +184,8 @@ function ensureCoverage(
   gqlDoc: string,
   variablesSkeleton: Record<string, unknown>,
   plan: Plan,
-  minScenarios: number
+  minScenarios: number,
+  resolverHints?: ResolverHints
 ): Plan {
   const operations = plan.operations?.length ? plan.operations : [{ name: opName, type: opType, scenarios: [] }];
   const op = operations[0];
@@ -99,31 +205,60 @@ function ensureCoverage(
     });
   }
 
+  const candidates = collectStringyPaths(variablesSkeleton);
+  const preferredPath = choosePreferredPath(candidates, resolverHints?.referencedArgs);
+
   // 2) Validation: missing field (baseline)
   if (opType === "mutation" && !scenarios.some(s => /missing|required|validation/i.test(s.title || s.id || ""))) {
     const base = buildHappyVariables(variablesSkeleton, "002");
-    const missing = makeMissingField(base);
+    let vars = jclone(base);
+    let removedPath: string[] | undefined;
+
+    if (preferredPath && deleteAtPath(vars, preferredPath)) {
+      removedPath = preferredPath;
+    } else {
+      const m = makeMissingField(base);
+      vars = m.vars;
+      removedPath = m.removedPath;
+    }
+
     scenarios.push({
       id: "validation-missing-field",
       title: "Validation (missing a field) — baseline",
       level: "integration",
       gql: gqlDoc,
-      variables: missing.vars,
-      notes: `Removed field path: ${(missing.removedPath || []).join(".") || "(unknown)"}`
+      variables: vars,
+      notes: `Removed field path: ${(removedPath || []).join(".") || "(unknown)"}`
     });
   }
 
-  // 3) Validation: invalid empty string (baseline)
+  // 3) Validation: invalid empty string (baseline, smarter)
   if (opType === "mutation" && !scenarios.some(s => /invalid.*empty/i.test((s.title || s.id || "").toLowerCase()))) {
     const base = buildHappyVariables(variablesSkeleton, "003");
-    const inv = makeInvalidEmptyString(base);
+    let vars = jclone(base);
+    let mutatedPath: string[] | undefined;
+
+    if (preferredPath) {
+      const cur = getAtPath(vars, preferredPath);
+      const okType = typeof cur === "string" || cur == null || (typeof cur !== "object");
+      if (okType && setAtPath(vars, preferredPath, "")) {
+        mutatedPath = preferredPath;
+      }
+    }
+
+    if (!mutatedPath) {
+      const inv = makeInvalidEmptyString(base);
+      vars = inv.vars;
+      mutatedPath = inv.mutatedPath;
+    }
+
     scenarios.push({
       id: "validation-invalid-empty",
       title: "Validation (invalid empty string) — baseline",
       level: "integration",
       gql: gqlDoc,
-      variables: inv.vars,
-      notes: `Mutated path to empty string: ${(inv.mutatedPath || []).join(".") || "(unknown)"}`
+      variables: vars,
+      notes: `Mutated path to empty string: ${(mutatedPath || []).join(".") || "(unknown)"}`
     });
   }
 
@@ -141,7 +276,7 @@ function ensureCoverage(
     });
   }
 
-  // 5) Enforce minimum scenarios (duplicate happy with different seeds)
+  // 5) Enforce minimum scenarios
   const seeds = ["010", "011", "012", "013", "014", "015"];
   let i = 0;
   while (scenarios.length < Math.max(1, minScenarios)) {
@@ -157,7 +292,20 @@ function ensureCoverage(
     if (i > 20) break;
   }
 
-  return { operations: [{ name: opName, type: opType, scenarios }] };
+  return { operations: [{ name: opName, type: opType, scenarios }], meta: plan.meta };
+}
+
+/* ------------------------ GQL validation/repair ------------------------- */
+function validateGqlAgainstSdl(sdl: string, gql: string): { ok: boolean; errors?: string[] } {
+  try {
+    // @ts-ignore graphql v16 supports assumeValidSDL
+    const schema = buildSchema(sdl, { assumeValidSDL: true });
+    const doc = parse(gql);
+    const errs = validate(schema, doc) as readonly GraphQLError[];
+    return { ok: errs.length === 0, errors: errs.map(e => e.message) };
+  } catch (e: any) {
+    return { ok: false, errors: [String(e?.message ?? e)] };
+  }
 }
 
 /* -------------------------------------------------------------------------------- */
@@ -242,12 +390,20 @@ export async function generateTestsForAllContexts(
     ]);
 
     const operationType: OpType = ctx?.operation?.type ?? "mutation";
+    const parentType = ctx?.operation?.parentType
+      ?? (operationType === "query" ? "Query" : operationType === "mutation" ? "Mutation" : "Subscription");
     const fieldName = ctx?.operation?.fieldName || topFieldFromContext(ctx);
+    const opKey = `${parentType}.${fieldName}`;
+
     const variablesSkeleton = ctx?.variablesSkeleton ?? {};
     const returnTree = ctx?.returnTree ?? null;
 
-    // Load extra prompt(s) for THIS operation
-    const { text: extraPrompt, sources: promptSources } = await loadExtraPromptForOperation(opDir);
+    // Load extra prompt(s) for THIS operation (now type- & opKey-aware)
+    const { text: extraPrompt, sources: promptSources } =
+      await loadExtraPromptForOperation(opDir, operationType, opKey);
+
+    // Load resolver hints for THIS operation (summarized from resolver/ & datasources, if present)
+    const resolverHints = await loadResolverHints(rootFolder, opDir);
 
     const system: LlmMessage = {
       role: "system",
@@ -258,7 +414,7 @@ export async function generateTestsForAllContexts(
 
     const requirements = [
       "Return JSON with this shape:",
-      `{
+`{
   "operations": [{
     "name": "string",
     "type": "query|mutation|subscription",
@@ -278,11 +434,11 @@ export async function generateTestsForAllContexts(
       "- At least one happy-path scenario with plausible variables.",
       "- At least one error or edge case (e.g., missing/invalid input, not-found).",
       "- Every field asserted in `expected.data` must be selected in `gql`.",
-      "- Keep selection sets concise and aligned to the return tree."
+      "- Keep selection sets concise and aligned to the return tree.",
     ].join("\n");
 
     const parts: string[] = [];
-    parts.push(`Operation: ${relName} (${operationType})`);
+    parts.push(`Operation: ${opKey} (${operationType})`);
     parts.push("");
     parts.push("1) Operation document:\n```graphql\n" + gqlDoc.trim() + "\n```");
     parts.push("");
@@ -291,15 +447,22 @@ export async function generateTestsForAllContexts(
     parts.push("3) Variables skeleton (edit to realistic values):\n```json\n" + JSON.stringify(variablesSkeleton, null, 2) + "\n```");
     parts.push("");
     parts.push("4) Return type tree (guide selection + assertions):\n```json\n" + JSON.stringify(returnTree ?? {}, null, 2) + "\n```");
+
+    if (resolverHints) {
+      parts.push("");
+      parts.push("5) Resolver hints (summarized; use to guide auth/validation and errors):");
+      parts.push("```json\n" + JSON.stringify(resolverHints, null, 2) + "\n```");
+    }
+
     parts.push(renderReturnTreeGuidance());
     parts.push("");
-    parts.push("5) Produce only valid JSON (no code fences).");
+    parts.push("6) Produce only valid JSON (no code fences).");
     parts.push("");
     parts.push(requirements);
 
     if (extraPrompt && extraPrompt.trim()) {
       parts.push("");
-      parts.push("6) Additional project guidance (follow strictly):");
+      parts.push(`7) Additional project guidance for ${opKey} (${operationType.toUpperCase()}) — follow strictly:`);
       parts.push(extraPrompt.trim());
     }
 
@@ -310,14 +473,14 @@ export async function generateTestsForAllContexts(
       let raw = "";
 
       await vscode.window.withProgress(
-        { location: vscode.ProgressLocation.Notification, title: `Generating tests: ${relName}`, cancellable: true },
+        { location: vscode.ProgressLocation.Notification, title: `Generating tests: ${opKey}`, cancellable: true },
         async (_progress, token) => {
           token.onCancellationRequested(() => cts.cancel());
 
           const messages: LlmMessage[] = [system, user];
           const doStreaming = (streaming) && typeof (client as any).chatStream === "function";
 
-          outChan.appendLine(`\n--- ${relName} ---`);
+          outChan.appendLine(`\n--- ${opKey} ---`);
           outChan.appendLine(`[${provider}] ${model} (streaming ${doStreaming ? "on" : "off"})`);
 
           if (doStreaming) {
@@ -339,24 +502,53 @@ export async function generateTestsForAllContexts(
       );
 
       const cleaned = stripFence(raw);
-      let plan: Plan & { meta?: any };
+      let plan: Plan;
       try {
         plan = JSON.parse(cleaned) as Plan;
       } catch {
-        plan = { operations: [{ name: relName, type: operationType, scenarios: [] }] };
+        plan = { operations: [{ name: opKey, type: operationType, scenarios: [] }] };
       }
-
       if (!plan?.operations?.length) {
-        plan = { operations: [{ name: relName, type: operationType, scenarios: [] }] };
+        plan = { operations: [{ name: opKey, type: operationType, scenarios: [] }] };
       }
 
-      // Augment with required baselines + min count
-      const augmented = ensureCoverage(relName, operationType, fieldName, gqlDoc, variablesSkeleton, plan, minScenarios);
+      // Validate/repair each scenario.gql against this op's SDL
+      const opEntry = plan.operations.find(o => o.name === opKey) ?? plan.operations[0];
+      if (Array.isArray(opEntry?.scenarios)) {
+        for (const sc of opEntry.scenarios) {
+          const txt = (sc.gql || "").trim();
+          if (!txt) {
+            sc.gql = gqlDoc;
+            sc.notes = (sc.notes ? sc.notes + " " : "") + "[autofixed] inserted canonical operation.gql";
+            continue;
+          }
+          const vr = validateGqlAgainstSdl(sdlDoc, txt);
+          if (!vr.ok) {
+            sc.gql = gqlDoc;
+            const first = vr.errors?.[0] ? ` (${vr.errors[0]})` : "";
+            sc.notes = (sc.notes ? sc.notes + " " : "") + `[autofixed] invalid gql replaced with canonical${first}`;
+          }
+        }
+      }
 
-      // Attach promptSources so it’s visible in plan.json without changing core structure
+      // Augment with baselines + min count (using resolver hints when helpful)
+      const augmented = ensureCoverage(
+        opKey,
+        operationType,
+        fieldName,
+        gqlDoc,
+        variablesSkeleton,
+        plan,
+        minScenarios,
+        resolverHints
+      );
+
+      // Attach meta: promptSources + resolverHints + opKey (keep operations shape intact)
       (augmented as any).meta = {
         ...(plan as any).meta,
-        promptSources: promptSources
+        opKey,
+        promptSources,
+        resolverHints: resolverHints ?? null,
       };
 
       await vscode.workspace.fs.writeFile(

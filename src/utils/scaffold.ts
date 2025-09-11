@@ -1,6 +1,6 @@
 // v1.0.0
 import * as vscode from "vscode";
-import { getGraphqlClientPy, getConftestSharedPy } from "../templates/pytest";
+import { getGraphqlClientPy, getConftestSharedPy, getTopLevelConftestPy } from "../templates/pytest";
 
 async function readUtf8(u: vscode.Uri): Promise<string | undefined> {
   try { return Buffer.from(await vscode.workspace.fs.readFile(u)).toString("utf8"); }
@@ -19,4 +19,6 @@ export async function ensurePytestSharedScaffold(contextsRoot: vscode.Uri) {
   await vscode.workspace.fs.createDirectory(shared);
   await writeIfChanged(vscode.Uri.joinPath(shared, "graphql_client.py"), getGraphqlClientPy());
   await writeIfChanged(vscode.Uri.joinPath(shared, "conftest_shared.py"), getConftestSharedPy());
+  await writeIfChanged(vscode.Uri.joinPath(contextsRoot, "conftest.py"), getTopLevelConftestPy());
+
 }

@@ -1,26 +1,33 @@
 import * as vscode from "vscode";
+import { buildPerOperationContexts } from "../contexts/buildOperationContexts";
 
 export function registerBuildOperationContexts(context: vscode.ExtensionContext) {
   const cmd = vscode.commands.registerCommand("appsyncTestGen.buildOperationContexts", async () => {
-    try {
-      const source = await (async () => {
-        const folder = await vscode.window.showOpenDialog({
-          canSelectFiles: false, canSelectFolders: true, canSelectMany: false,
-          openLabel: "Select folder with schema.graphql and resolvers/"
-        });
-        return folder?.[0];
-      })();
-      if (!source) return;
+    const pick = await vscode.window.showOpenDialog({
+      canSelectFiles: false,
+      canSelectFolders: true,
+      canSelectMany: false,
+      openLabel: "Select folder with schema.graphql or schema.introspection.json"
+    });
+    const sourceFolder = pick?.[0];
+    if (!sourceFolder) return;
 
-      const { buildPerOperationContexts } = await import("../contexts/buildOperationContexts");
-      const result = await vscode.window.withProgress(
-        { location: vscode.ProgressLocation.Notification, title: "Building per-operation contexts…", cancellable: false },
-        () => buildPerOperationContexts({ sourceFolder: source, selectionDepth: 1, maxFieldsPerLevel: 20 })
-      );
-      vscode.window.showInformationMessage(`Built ${result.total} context(s).`);
-    } catch (err: any) {
-      vscode.window.showErrorMessage(`Build contexts failed: ${err?.message ?? String(err)}`);
-    }
+    const cfg = vscode.workspace.getConfiguration("appsyncTestGen.contexts");
+    const selectionDepth     = cfg.get<number>("selectionDepth", 2);
+    const maxFieldsPerLevel  = cfg.get<number>("maxFieldsPerLevel", 20);
+    const returnTreeDepth    = cfg.get<number>("returnTreeDepth", 2);
+    const returnTreeMaxFields= cfg.get<number>("returnTreeMaxFields", 25);
+
+    const res = await buildPerOperationContexts({
+      sourceFolder,
+      selectionDepth,
+      maxFieldsPerLevel,
+      returnTreeDepth,
+      returnTreeMaxFields
+    });
+
+    vscode.window.showInformationMessage(`Built ${res.total} operation context(s).`);
   });
+
   context.subscriptions.push(cmd);
 }

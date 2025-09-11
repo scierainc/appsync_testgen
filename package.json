@@ -35,7 +35,7 @@
       },
       {
         "command": "appsyncTestGen.generateTestsForSelection",
-        "title": "Generate Test Plans (Pick Operations)"
+        "title": "AppSync: Generate Test Plans (Pick Operations)"
       },
       {
         "command": "appsyncTestGen.generateTestsByRegex",
@@ -238,6 +238,75 @@
           "type": "string",
           "default": "",
           "description": "Optional additional instructions for the LLM to follow when generating scenarios (e.g., domain rules, naming conventions)."
+        },
+        "appsyncTestGen.resolvers.fetchDataSources": {
+          "type": "boolean",
+          "default": true,
+          "description": "When true, resolver fetch will also retrieve and save data source definitions used by those resolvers."
+        },
+        "appsyncTestGen.contexts.selectionDepth": {
+          "type": "number",
+          "default": 2,
+          "minimum": 0,
+          "description": "Depth for auto-generated selection sets in operation.graphql (0 = only top-level fields; deeper values select nested fields)."
+        },
+        "appsyncTestGen.contexts.maxFieldsPerLevel": {
+          "type": "number",
+          "default": 20,
+          "minimum": 1,
+          "description": "Max fields to include per object level when generating selection sets."
+        },
+        "appsyncTestGen.contexts.returnTreeDepth": {
+          "type": "number",
+          "default": 2,
+          "minimum": 0,
+          "description": "Depth for expanding the returnTree structure saved in context.json."
+        },
+        "appsyncTestGen.contexts.returnTreeMaxFields": {
+          "type": "number",
+          "default": 25,
+          "minimum": 1,
+          "description": "Max fields per object when building the returnTree."
+        },
+        "appsyncTestGen.generation.perOperationPrompts": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "object",
+            "properties": {
+              "op": {
+                "type": "string",
+                "description": "Operation key like \"Mutation.createCourse\". Supports '*' wildcard (e.g., \"Mutation.create*\")."
+              },
+              "prompt": {
+                "type": "string",
+                "description": "Inline extra prompt text to apply to this operation."
+              },
+              "file": {
+                "type": "string",
+                "description": "Path (absolute or workspace-relative) to a markdown/text file whose contents are appended."
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "description": "Extra prompts applied to specific operations. Items are merged in order when their 'op' pattern matches the operation key (<ParentType>.<field>)."
+        },
+        "appsyncTestGen.generation.extraPromptQuery": {
+          "type": "string",
+          "default": "",
+          "description": "Extra prompt applied only to Query operations."
+        },
+        "appsyncTestGen.generation.extraPromptMutation": {
+          "type": "string",
+          "default": "",
+          "description": "Extra prompt applied only to Mutation operations."
+        },
+        "appsyncTestGen.generation.extraPromptSubscription": {
+          "type": "string",
+          "default": "",
+          "description": "Extra prompt applied only to Subscription operations."
         }
       }
     }
@@ -250,6 +319,7 @@
   "devDependencies": {
     "@types/node": "^20.11.0",
     "@types/vscode": "^1.90.0",
+    "allure-commandline": "^2.34.1",
     "typescript": "^5.4.0"
   },
   "dependencies": {
