@@ -33,3 +33,20 @@ resolvers/ (optional, fetched)
   _datasources/
     <name>.json
 ```
+
+**Generated per-op folder:**
+```
+contexts/
+  Mutation.createCourse/
+    operation.graphql
+    operation.sdl.graphql
+    context.json
+    plan.json
+    resolver/               # copied from resolvers/ if present
+      request.vtl | code.js | response.vtl | resolver.meta.json
+  _shared/
+    pytest/
+      graphql_client.py
+      conftest_shared.py
+
+```

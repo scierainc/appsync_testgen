@@ -41,7 +41,11 @@ Generate per-operation GraphQL contexts from an AppSync schema, draft test plans
 - **Materialize** Pytest or Jest tests from plans
 - **Allure** reporting tasks (workspace & external contexts)
 
----
+## Quickstart
+1. Fetch schema → Build contexts → Generate plans → Materialize tests
+2. Run Pytest or Jest via tasks (`.vscode/tasks.json`)
+3. Allure: `pytest ... --alluredir ./allure-results` then `npx allure serve ./allure-results`
+
 
 ## TODO
 

@@ -1,91 +1,46 @@
 # Testing & Allure (Pytest)
 
-### Install
+> Jest support exists but may be flaky across some schemas/auth modes. Prefer **Pytest** first.
+
+## Install
 
 ```bash
 pip install pytest requests allure-pytest
-# Optional: install Allure CLI
+# Optional: Allure CLI
 npm i -D allure-commandline
 ```
 
-### Run
+## Run (CLI)
 
 ```bash
 # minimal
 APPSYNC_ENDPOINT=... APPSYNC_API_KEY=... python -m pytest contexts
 
-# with JWT
+# with Cognito JWT
 APPSYNC_ENDPOINT=... APPSYNC_AUTH_MODE=COGNITO APPSYNC_JWT=... python -m pytest contexts
 
-# write artifacts and Allure results
+# write Allure results
 python -m pytest contexts --alluredir ./allure-results
 npx allure serve ./allure-results
 ```
 
-Environment variables consumed by the helper:
+## Environment variables used by the Pytest scaffold:
 
-- `APPSYNC_ENDPOINT` (required)
-- `APPSYNC_AUTH_MODE` = `API_KEY | COGNITO` (IAM not supported in Python helper)
-- `APPSYNC_API_KEY` or `APPSYNC_JWT`
-- `AWS_REGION`, `AWS_PROFILE` (metadata only)
-- `APPSYNC_WRITE_ARTIFACTS` = `onfail|all|off` (default `onfail`)
-- `APPSYNC_ARTIFACT_DIR` (default `artifacts`)
+  - APPSYNC_ENDPOINT (required)
 
-> IAM testing is supported via **Jest/Node** or by adding a botocore signer—out of scope of the default Pytest client.
+  - APPSYNC_AUTH_MODE = API_KEY | COGNITO (IAM not supported by the default Python client)
 
+  - APPSYNC_API_KEY or APPSYNC_JWT
 
+  - AWS_REGION, AWS_PROFILE (metadata only)
 
+  - APPSYNC_WRITE_ARTIFACTS = onfail|all|off (default onfail)
 
-# Testing & Allure
+  - APPSYNC_ARTIFACT_DIR (default artifacts)
 
-We ship multiple VS Code tasks for **workspace** and **external** contexts.  
-External mode points to an arbitrary folder that contains `contexts/`.
-
-## Pytest (recommended)
-
-### Workspace
-- `Test: Pytest (API Key, workspace)`
-- `Test: Pytest (IAM, workspace)` ⚠️ Your `graphql_client.py` must implement SigV4 for IAM.
-- `Test: Pytest (Cognito JWT, workspace)`
-
-### External
-- `Test: Pytest (API Key, external)`
-- `Test: Pytest (IAM, external)`
-- `Test: Pytest (Cognito JWT, external)`
-
-## Jest (experimental)
-- `Test: Jest (API Key, workspace/external)`
-- `Test: Jest (IAM, workspace/external)`
-- `Test: Jest (Cognito*, workspace/external)`
-
-> **TODO:** Jest test cases may not work reliably across all schemas/auth modes.
-
-## Allure
-
-### Generate results (workspace)
-- `Test: Pytest (API Key, workspace) + Allure`  
-- `Test: Pytest (IAM, workspace) + Allure`  
-- `Test: Pytest (Cognito JWT, workspace) + Allure`
-
-### Generate results (external)
-- `Test: Pytest (API Key, external) + Allure`
-
-### Serve & static
-- `Allure: Serve (workspace results)`
-- `Allure: Generate static report (workspace)`
-- `Allure: Open static report (workspace)`
-- `Allure: Serve (external results)`
-- `Allure: Generate static report (external)`
-- `Allure: Open static report (external)`
-
-### One-click (examples)
-- `Allure: Run Pytest (workspace/API Key) & Serve`
-- `Allure: Run Pytest (external/API Key) & Serve`
-
-## Snippets (for `.vscode/tasks.json`)
-
-> **Workspace Allure serve**
-```jsonc
+# VS Code Tasks (snippets)
+## Workspace Allure serve
+```
 {
   "label": "Allure: Serve (workspace results)",
   "type": "shell",
@@ -94,11 +49,8 @@ External mode points to an arbitrary folder that contains `contexts/`.
   "problemMatcher": []
 }
 ```
-
-
-> **External Allure serve**
-```jsonc
-
+## External Allure serve
+```
 {
   "label": "Allure: Serve (external results)",
   "type": "shell",
@@ -107,10 +59,8 @@ External mode points to an arbitrary folder that contains `contexts/`.
   "problemMatcher": []
 }
 ```
-
-> **Workspace Pytest + Allure**
-```jsonc
-
+## Workspace Pytest + Allure
+```
 {
   "label": "Test: Pytest (API Key, workspace) + Allure",
   "type": "process",
@@ -123,13 +73,12 @@ External mode points to an arbitrary folder that contains `contexts/`.
       "APPSYNC_AUTH_MODE": "API_KEY",
       "APPSYNC_API_KEY": "${input:APPSYNC_API_KEY}"
     }
-  }
+  },
+  "group": "test"
 }
 ```
-
-> **External Pytest + Allure**
-```jsonc
-
+## External Pytest + Allure
+```
 {
   "label": "Test: Pytest (API Key, external) + Allure",
   "type": "process",
@@ -142,13 +91,12 @@ External mode points to an arbitrary folder that contains `contexts/`.
       "APPSYNC_AUTH_MODE": "API_KEY",
       "APPSYNC_API_KEY": "${input:APPSYNC_API_KEY}"
     }
-  }
+  },
+  "group": "test"
 }
 ```
-
-> **One-click run & serve (workspace/API Key)**
-```jsonc
-
+## One-click examples
+```
 {
   "label": "Allure: Run Pytest (workspace/API Key) & Serve",
   "dependsOrder": "sequence",
@@ -159,16 +107,59 @@ External mode points to an arbitrary folder that contains `contexts/`.
 }
 ```
 
-> **One-click run & serve (external/API Key)**
+(Your current file contains duplicate/snipped content—this replacement removes the confusion.) :contentReference[oaicite:9]{index=9} :contentReference[oaicite:10]{index=10}
+
+---
+
+## 3) Tweak **`docs/commands.md`** (tiny polish)
+
+- Change “**operation operation.graphql**” → “**operation.graphql**”.  
+- Keep “Key Concepts & Outputs” but tighten bullet spacing.
+
+Where it currently shows the duplicate phrasing: :contentReference[oaicite:11]{index=11}
+
+---
+
+## 4) Add **`docs/tasks.md`** (missing, but linked elsewhere)
+
+```md
+# VS Code Tasks (run & report)
+
+Add entries to `.vscode/tasks.json`.
+
+## Pytest — workspace contexts + Allure
 ```jsonc
-
 {
-  "label": "Allure: Run Pytest (external/API Key) & Serve",
-  "dependsOrder": "sequence",
-  "dependsOn": [
-    "Test: Pytest (API Key, external) + Allure",
-    "Allure: Serve (external results)"
-  ]
+  "label": "Test: Pytest (API Key, workspace) + Allure",
+  "type": "process",
+  "command": "${config:python.defaultInterpreterPath}",
+  "args": ["-m","pytest","contexts","--alluredir","${workspaceFolder}/allure-results"],
+  "options": {"env": {"PYTHONPATH": "${workspaceFolder}/contexts/_shared/pytest","APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}","APPSYNC_AUTH_MODE": "API_KEY","APPSYNC_API_KEY": "${input:APPSYNC_API_KEY}"}},
+  "group": "test"
 }
-```
 
+Allure — serve workspace results
+{
+  "label": "Allure: Serve (workspace results)",
+  "type": "shell",
+  "command": "npx",
+  "args": ["allure","serve","${workspaceFolder}/allure-results"]
+}
+
+Pytest — external contexts + Allure
+{
+  "label": "Test: Pytest (API Key, external) + Allure",
+  "type": "process",
+  "command": "${config:python.defaultInterpreterPath}",
+  "args": ["-m","pytest","${input:CONTEXTS_ROOT}/contexts","--alluredir","${input:CONTEXTS_ROOT}/allure-results"],
+  "options": {"env": {"PYTHONPATH": "${input:CONTEXTS_ROOT}/contexts/_shared/pytest","APPSYNC_ENDPOINT": "${input:APPSYNC_ENDPOINT}","APPSYNC_AUTH_MODE": "API_KEY","APPSYNC_API_KEY": "${input:APPSYNC_API_KEY}"}},
+  "group": "test"
+}
+
+Allure — serve external results
+{
+  "label": "Allure: Serve (external results)",
+  "type": "shell",
+  "command": "npx",
+  "args": ["allure","serve","${input:CONTEXTS_ROOT}/allure-results"]
+}

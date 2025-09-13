@@ -1,0 +1,19 @@
+# keep OUT/, it’s your compiled code
+src/**
+**/*.map
+.vscode/**
+.vscode-test/**
+.git/**
+.github/**
+**/*.md
+docs/**
+scripts/**
+coverage/**
+test/**
+tests/**
+allure-results/**
+allure-report/**
+artifacts/**
+contexts/**
+
+# keep package.json, out/**, node prod deps by default (vsce handles dev deps)

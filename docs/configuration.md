@@ -2,26 +2,19 @@
 
 Open **Settings** → search `appsyncTestGen`.
 
-## LLM
-- `appsyncTestGen.llm.provider`: `"openai" | "anthropic" | "bedrock" | "compat" | "gemini"`
-- `appsyncTestGen.llm.model`
-- `appsyncTestGen.llm.baseUrl` (OpenAI-compatible endpoints)
-- `appsyncTestGen.llm.temperature` (default `0.2`)
-- `appsyncTestGen.llm.maxTokens` (default `1600`)
-- `appsyncTestGen.llm.streaming` (default `true`)
+## LLM (`appsyncTestGen.llm`)
+- `provider`: `"openai" | "anthropic" | "bedrock" | "compat" | "gemini"`
+- `model`, `baseUrl` (OpenAI-compatible endpoints)
+- `temperature` (default `0.2`), `maxTokens` (default `1600`), `streaming` (default `true`)
 - Bedrock extras: `region`, `profile`, `bedrockModelId`
 
-## Generation
-- `appsyncTestGen.generation.minScenariosPerOperation` (default `4`)
-- `appsyncTestGen.generation.selectionDepth` (default `1`)
-- `appsyncTestGen.generation.maxFieldsPerLevel` (default `20`)
-- `appsyncTestGen.generation.returnTreeDepth` (default `2`)
-- `appsyncTestGen.generation.returnTreeMaxFields` (default `25`)
-- **Prompts**:
-  - `extraPrompt` (and legacy `userGuidance`)
+## Generation (`appsyncTestGen.generation`)
+- `minScenariosPerOperation` (default `4`)
+- **Prompts**
+  - `extraPrompt` (string or string[]; legacy `userGuidance` also read)
   - `extraPromptQuery`, `extraPromptMutation`, `extraPromptSubscription`
   - `extraPromptFile` (abs or workspace-relative)
-  - `perOperationPrompts` (array)
+  - `perOperationPrompts` (array of `{ op, prompt?, file? }`), e.g.:
     ```jsonc
     [
       { "op": "Mutation.createCourse", "file": ".appsync-testgen/operations/Mutation.createCourse.md" },
@@ -29,15 +22,19 @@ Open **Settings** → search `appsyncTestGen`.
     ]
     ```
 
-## Tests
-- `appsyncTestGen.tests.framework`: `"pytest"` or `"jest"` (default `pytest`)
-- `appsyncTestGen.tests.outputRoot`: default `contexts`
-> **Selection depth** (for context builder): if you expose it as settings, use keys like `appsyncTestGen.contexts.selectionDepth` (default 1) and `appsyncTestGen.contexts.returnTreeDepth` (default 2). When unset, defaults apply.
+## Contexts (`appsyncTestGen.contexts`)
+- `selectionDepth` (default `2`)
+- `maxFieldsPerLevel` (default `20`)
+- `returnTreeDepth` (default `2`)
+- `returnTreeMaxFields` (default `25`)
 
+## Tests (`appsyncTestGen.tests`)
+- `framework`: `"pytest" | "jest"` (recommended: **pytest**)
+- `outputRoot`: default `contexts`
 
-## Resolvers
-- `appsyncTestGen.resolvers.fetchDataSources`: boolean (default `true`)
+## Resolvers (`appsyncTestGen.resolvers`)
+- `fetchDataSources`: boolean (default `true`)
 
-## Connection
-- `appsyncTestGen.connection.region`
-- `appsyncTestGen.connection.profile`
+## Connection (`appsyncTestGen.connection`)
+- `region`
+- `profile`

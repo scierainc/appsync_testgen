@@ -1,3 +1,34 @@
+# Key Concepts & Outputs
+
+- **Per-operation context** (generated under contexts/<ParentType>.<fieldName>/):
+
+  * operation operation.graphql — canonical GraphQL document with a compact selection set
+
+  * operation.sdl.graphql — pruned SDL for only the types reachable by this operation
+
+  * context.json — metadata: args, variables skeleton, typeClosure, and a returnTree
+
+  * resolver/ (optional) — resolver artifacts copied from AppSync (VTL/JS + meta)
+
+  * plan.json — (after LLM) test plan with scenarios for the operation
+
+**Test materialization:**
+
+  * Pytest: Python tests are emitted under the chosen tests root (default contexts/).
+
+  * Jest: TS/JS tests are emitted alongside or under configured root.
+
+**Shared test scaffold for Pytest:**
+
+  * Created at contexts/_shared/pytest/ from templates:
+
+  * graphql_client.py (AppSync HTTP client)
+
+  * conftest_shared.py (fixtures/env)
+
+
+
+
 Open the Command Palette (Ctrl/Cmd+Shift+P):
 
 - **AppSync: Fetch Schema (… auth …)**  

@@ -176,7 +176,7 @@
             "jest",
             "pytest"
           ],
-          "default": "jest",
+          "default": "pytest",
           "description": "Default framework for materialized tests."
         },
         "appsyncTestGen.generation.minScenariosPerOperation": {
