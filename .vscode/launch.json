@@ -1,41 +1,28 @@
-// v1 - launch.json
 {
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Run Extension (Watch)",
+      "name": "Run Extension (Watch, bundled)",
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
-      "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}"
-      ],
-      "outFiles": [
-        "${workspaceFolder}/out/**/*.js"
-      ],
-      "preLaunchTask": "npm: watch",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "preLaunchTask": "watch",
       "sourceMaps": true,
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
+      "skipFiles": ["<node_internals>/**"],
       "internalConsoleOptions": "openOnSessionStart"
     },
     {
-      "name": "Run Extension (Build once)",
+      "name": "Run Extension (Build once, bundled)",
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
-      "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}"
-      ],
-      "outFiles": [
-        "${workspaceFolder}/out/**/*.js"
-      ],
-      "preLaunchTask": "npm: build",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "preLaunchTask": "npm: package",
       "sourceMaps": true,
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
+      "skipFiles": ["<node_internals>/**"],
       "internalConsoleOptions": "openOnSessionStart"
     },
 
@@ -47,15 +34,9 @@
       "program": "${workspaceFolder}/scripts/test-runner.js",
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
-      "env": {
-        // You can override or add env here while debugging the runner.
-        // "APPSYNC_ENDPOINT": "",
-        // "APPSYNC_API_KEY": ""
-      },
+      "env": {},
       "autoAttachChildProcesses": true,
-      "skipFiles": [
-        "<node_internals>/**"
-      ]
+      "skipFiles": ["<node_internals>/**"]
     }
   ]
 }

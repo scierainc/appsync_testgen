@@ -1,19 +1,49 @@
-# keep OUT/, it’s your compiled code
-src/**
-**/*.map
+# --- dev / workspace bits ---
 .vscode/**
 .vscode-test/**
-.git/**
 .github/**
-**/*.md
-docs/**
+.github
+.git/**
+.gitignore
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# --- sources & build metadata ---
+src/**
+**/*.ts
+**/*.tsbuildinfo
+**/*.map
 scripts/**
-coverage/**
-test/**
 tests/**
+test/**
+coverage/**
+dist/**
+out/**
+node_modules/**
+
+# --- local data & artifacts (not needed in the extension) ---
+contexts/**
 allure-results/**
 allure-report/**
 artifacts/**
-contexts/**
 
-# keep package.json, out/**, node prod deps by default (vsce handles dev deps)
+# --- Python env & caches (these bloated your VSIX) ---
+.venv/**
+.venv
+__pycache__/**
+.pytest_cache/**
+.pytest_cache
+*.pyc
+
+# --- OS cruft ---
+.DS_Store
+Thumbs.db
+
+
+# keep
+!dist/**
+!README.md
+!LICENSE*
+!CHANGELOG.md
+!**/*.md
