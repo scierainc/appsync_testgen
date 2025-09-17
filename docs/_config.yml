@@ -1,6 +1,6 @@
 title: AppSync TestGen
 description: "Documentation & usage guides for the AppSync TestGen VS Code extension."
-remote_theme: just-the-docs/just-the-docs
+remote_theme: Cayman
 
 search_enabled: true
 plugins:
