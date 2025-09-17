@@ -15,7 +15,7 @@ title: AppSync TestGen
 ---
 
 ## Start here
-- [Getting Started](GETTING_STARTED)
+- [Getting Started](getting_started)
 - [Project Structure](project-structure)
 - [Configuration](configuration)
 
