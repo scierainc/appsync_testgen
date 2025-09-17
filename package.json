@@ -1,9 +1,10 @@
 {
   "name": "appsync-testgen",
   "displayName": "AppSync TestGen",
-  "publisher": "your-name",
-  "version": "0.0.2",
+  "publisher": "Sciera",
+  "version": "0.0.1",
   "description": "VS Code extension to fetch AppSync schemas/resolvers and generate Jest/Pytest tests via LLMs.",
+  "icon": "icons/appsync-testgen-icon-128.png",
   "engines": {
     "vscode": "^1.90.0"
   },

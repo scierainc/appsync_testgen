@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <style>
+      .primary { stroke: #2563eb; fill: none; stroke-width: 32; stroke-linecap: round; stroke-linejoin: round; }
+      .accent { stroke: #06b6d4; fill: none; stroke-width: 18; stroke-linecap: round; stroke-linejoin: round; }
+      .nodeOuter { fill: #2563eb; }
+      .nodeInner { fill: #ffffff; }
+    </style>
+  </defs>
+  <path class="primary" d="M512,160 L784,320 L784,640 L512,800 L240,640 L240,320 Z" />
+  <line class="accent" x1="512" y1="280" x2="332" y2="560" />
+  <line class="accent" x1="512" y1="280" x2="692" y2="560" />
+  <line class="accent" x1="332" y1="560" x2="692" y2="560" />
+  <circle class="nodeOuter" cx="512" cy="280" r="36"/><circle class="nodeInner" cx="512" cy="280" r="18"/>
+  <circle class="nodeOuter" cx="332" cy="560" r="36"/><circle class="nodeInner" cx="332" cy="560" r="18"/>
+  <circle class="nodeOuter" cx="692" cy="560" r="36"/><circle class="nodeInner" cx="692" cy="560" r="18"/>
+  <path class="primary" d="M420,620 L500,700 L680,500" />
+</svg>
