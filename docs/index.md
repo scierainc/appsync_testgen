@@ -5,7 +5,7 @@ title: AppSync TestGen
 
 # AppSync TestGen
 
-**AppSync TestGen** is a VS Code extension that scaffolds **contexts**, validates **GraphQL operations**, and generates **runnable tests** (Pytest or Jest) for AWS AppSync APIs.
+**AppSync TestGen** is a VS Code extension that scaffolds **contexts**, validates **GraphQL operations**, and generates **runnable tests** for AWS AppSync.
 
 <div class="badges">
   <a class="btn" href="https://github.com/scierainc/appsync_testgen">GitHub Repo</a>
@@ -14,22 +14,27 @@ title: AppSync TestGen
 
 ---
 
-## Quick links
-
+## Start here
+- [Getting Started](GETTING_STARTED)
+- [Project Structure](project-structure)
 - [Configuration](configuration)
-- [FAQ](faq)
-- [Generate workflow](workflow)
-- [Getting started](getting_started)
-- [Key Concepts & Outputs](commands)
-- [Per-operation prompt customization](prompts)
-- [Project structure](project-structure)
-- [Resolvers & Data Sources](resolvers)
-- [Security notes](security)
-- [Testing & Allure (Pytest)](testing)
+
+## Workflows & Commands
+- [Workflow](workflow)
+- [Commands](commands)
+
+## Advanced Topics
+- [Prompts](prompts)
+- [Resolvers](resolvers)
+
+## Quality & Ops
+- [Testing](testing)
 - [Troubleshooting](troubleshooting)
+- [Security](security)
+
+## Help
+- [FAQ](faq)
 
 ---
 
-## About this site
-
-This site uses the **Architect** theme via `remote_theme: pages-themes/architect@v0.2.0`, built and deployed from `/docs` using GitHub Pages.
+_This site uses the **Architect** theme via `remote_theme: pages-themes/architect@v0.2.0`._

@@ -1,6 +1,7 @@
 ---
 layout: default
-title: Security notes
+title: Security
+nav_order: 10
 ---
 
 # Security notes

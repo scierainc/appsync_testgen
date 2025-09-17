@@ -1,6 +1,7 @@
 ---
 layout: default
-title: Per-operation prompt customization
+title: Prompts
+nav_order: 6
 ---
 
 # Per-operation prompt customization

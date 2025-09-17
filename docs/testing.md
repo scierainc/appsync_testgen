@@ -1,6 +1,7 @@
 ---
 layout: default
-title: Testing & Allure (Pytest)
+title: Testing
+nav_order: 8
 ---
 
 # Testing & Allure (Pytest)

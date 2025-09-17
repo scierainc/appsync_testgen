@@ -1,6 +1,7 @@
 ---
 layout: default
-title: Generate workflow
+title: Workflow
+nav_order: 4
 ---
 
 # Generate workflow

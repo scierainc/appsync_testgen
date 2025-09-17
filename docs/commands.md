@@ -1,6 +1,7 @@
 ---
 layout: default
-title: Key Concepts & Outputs
+title: Commands
+nav_order: 5
 ---
 
 # Key Concepts & Outputs

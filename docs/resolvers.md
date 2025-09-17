@@ -1,6 +1,7 @@
 ---
 layout: default
-title: Resolvers & Data Sources
+title: Resolvers
+nav_order: 7
 ---
 
 # Resolvers & Data Sources

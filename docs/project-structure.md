@@ -1,6 +1,7 @@
 ---
 layout: default
-title: Project structure
+title: Project Structure
+nav_order: 2
 ---
 
 # Project structure
