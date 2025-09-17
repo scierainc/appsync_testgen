@@ -320,7 +320,16 @@
     "package": "npm run check-types && node esbuild.js --production",
     "vscode:prepublish": "npm run package",
     "build": "tsc -p .",
-    "vscode:package-legacy": "npm run build"
+    "vscode:package-legacy": "npm run build",
+
+    "clean:build": "rimraf dist out",
+    "clean:reports": "rimraf allure-results allure-report coverage artifacts",
+    "clean:caches": "rimraf .pytest_cache .vscode-test .eslintcache",
+    "clean:venv": "rimraf .venv",                   
+    "clean:modules": "rimraf node_modules",         
+    "clean": "npm-run-all -s clean:build clean:reports clean:caches",
+
+    "rebuild": "npm run clean:build && npm run package"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
@@ -328,6 +337,7 @@
     "allure-commandline": "^2.34.1",
     "esbuild": "^0.25.9",
     "npm-run-all": "^4.1.5",
+    "rimraf": "^6.0.1",
     "typescript": "^5.4.0"
   },
   "dependencies": {

@@ -674,6 +674,36 @@
       },
       "group": "test",
       "problemMatcher": []
+    },
+    {
+      "label": "Clean: build artifacts",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "run",
+        "clean:build"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Clean: all (build + reports + caches)",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "run",
+        "clean"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Clean: everything (incl node_modules)",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "run",
+        "clean:modules"
+      ],
+      "problemMatcher": []
     }
   ],
   "inputs": [

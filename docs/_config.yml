@@ -1,0 +1,16 @@
+title: AppSync TestGen
+description: "Documentation & usage guides for the AppSync TestGen VS Code extension."
+remote_theme: just-the-docs/just-the-docs
+
+search_enabled: true
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
+  - jekyll-remote-theme
+
+logo: /assets/logo.svg
+
+aux_links:
+  "View on GitHub":
+    - "https://github.com/scierainc/appsync_testgen"
+aux_links_new_tab: true
