@@ -1,3 +1,8 @@
+---
+layout: default
+title: Key Concepts & Outputs
+---
+
 # Key Concepts & Outputs
 
 - **Per-operation context** (generated under contexts/<ParentType>.<fieldName>/):

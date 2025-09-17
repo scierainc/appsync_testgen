@@ -1,3 +1,8 @@
+---
+layout: default
+title: Configuration
+---
+
 # Configuration
 
 Open **Settings** → search `appsyncTestGen`.

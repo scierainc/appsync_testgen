@@ -1,3 +1,8 @@
+---
+layout: default
+title: Resolvers & Data Sources
+---
+
 # Resolvers & Data Sources
 
 Use **AppSync: Fetch Resolvers and Save (IAM)**:

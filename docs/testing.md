@@ -1,3 +1,8 @@
+---
+layout: default
+title: Testing & Allure (Pytest)
+---
+
 # Testing & Allure (Pytest)
 
 > Jest support exists but may be flaky across some schemas/auth modes. Prefer **Pytest** first.

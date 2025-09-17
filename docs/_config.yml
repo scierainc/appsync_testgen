@@ -1,16 +1,11 @@
 title: AppSync TestGen
-description: "Documentation & usage guides for the AppSync TestGen VS Code extension."
-remote_theme: Cayman
+description: "VS Code extension to generate and validate tests for AWS AppSync GraphQL APIs."
+remote_theme: pages-themes/architect@v0.2.0
 
-search_enabled: true
 plugins:
+  - jekyll-remote-theme
   - jekyll-seo-tag
   - jekyll-sitemap
-  - jekyll-remote-theme
 
-logo: /assets/logo.svg
-
-aux_links:
-  "View on GitHub":
-    - "https://github.com/scierainc/appsync_testgen"
-aux_links_new_tab: true
+show_downloads: true
+# google_analytics: G-XXXXXXXXXX

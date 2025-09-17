@@ -1,3 +1,8 @@
+---
+layout: default
+title: Troubleshooting
+---
+
 # Troubleshooting
 
 ### Generation failed: `(genCfg.get(...) || "").trim is not a function`

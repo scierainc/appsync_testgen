@@ -1,3 +1,8 @@
+---
+layout: default
+title: Per-operation prompt customization
+---
+
 # Per-operation prompt customization
 
 Prompt assembly is handled by `src/utils/promptLoader.ts` (v3). For each operation directory (e.g., `contexts/Mutation.createCourse`), the loader concatenates sources in this **generic → specific** order:

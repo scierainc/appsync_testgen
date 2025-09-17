@@ -1,3 +1,8 @@
+---
+layout: default
+title: Generate workflow
+---
+
 # Generate workflow
 
 1. **Fetch schema**  
