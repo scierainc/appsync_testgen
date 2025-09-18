@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="44" viewBox="0 0 220 44">
+  <defs>
+    <style>
+      .bg { fill: #0f172a; }
+      .text { fill: #ffffff; font: 700 16px 'DejaVu Sans', Arial, sans-serif; dominant-baseline: middle; }
+      .accent { stroke: #06b6d4; stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+  </defs>
+  <rect x="0" y="0" width="220" height="44" rx="22" class="bg"/>
+  <path d="M26 12 L14 22 L26 32" class="accent"/>
+  <path d="M36 12 L48 22 L36 32" class="accent"/>
+  <text x="60" y="22" class="text">Install on VS Code</text>
+</svg>
