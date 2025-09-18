@@ -15,7 +15,7 @@ Generate per-operation GraphQL contexts from an AppSync schema, draft test plans
 
 ## Quick links
 
-- [Getting started](docs/GETTING_STARTED.md)
+- [Getting started](docs/getting_started.md)
 - [Commands](docs/commands.md)
 - [Configuration](docs/configuration.md)
 - [Per-operation prompts](docs/prompts.md)
