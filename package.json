@@ -338,21 +338,21 @@
     "allure-commandline": "^2.34.1",
     "esbuild": "^0.25.9",
     "npm-run-all": "^4.1.5",
-    "rimraf": "^6.0.1",
+    "rimraf": "^6.1.4",
     "typescript": "^5.4.0"
   },
   "dependencies": {
     "@aws-crypto/sha256-js": "^5.2.0",
-    "@aws-sdk/client-appsync": "^3.864.0",
-    "@aws-sdk/credential-provider-node": "^3.617.0",
-    "@aws-sdk/credential-providers": "^3.617.0",
+    "@aws-sdk/client-appsync": "^3.1176.0",
+    "@aws-sdk/credential-provider-node": "^3.972.98",
+    "@aws-sdk/credential-providers": "^3.1176.0",
     "@smithy/protocol-http": "^3.0.0",
     "@smithy/signature-v4": "^3.0.0",
     "graphql": "^16.11.0"
   },
   "optionalDependencies": {
     "@anthropic-ai/sdk": "^0.21.0",
-    "@aws-sdk/client-bedrock-runtime": "^3.864.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.1176.0",
     "@google/generative-ai": "^0.19.0",
     "openai": "^4.104.0"
   },
